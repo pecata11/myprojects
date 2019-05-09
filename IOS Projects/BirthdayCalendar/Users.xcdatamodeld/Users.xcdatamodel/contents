@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model name="" userDefinedModelVersionIdentifier="" type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="1810" systemVersion="12C60" minimumToolsVersion="Automatic" macOSVersion="Automatic" iOSVersion="Automatic">
+    <entity name="ContactsData" representedClassName="ContactsData" syncable="YES">
+        <attribute name="checked" optional="YES" attributeType="Integer 16" syncable="YES"/>
+        <attribute name="sendMessage" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="sendRequest" optional="YES" attributeType="Integer 16" syncable="YES"/>
+        <attribute name="userID" optional="YES" attributeType="Integer 16" defaultValueString="0.0" syncable="YES"/>
+        <attribute name="username" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="userphone" optional="YES" attributeType="String" syncable="YES"/>
+    </entity>
+    <entity name="Entity" syncable="YES"/>
+    <entity name="UserData" representedClassName="UserData" syncable="YES">
+        <attribute name="birthday" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="name" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="photo" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="thumbimage" optional="YES" attributeType="Binary" valueTransformerName="NSUnarchiveFromDataTransformerName" storedInTruthFile="YES" syncable="YES"/>
+        <attribute name="userID" optional="YES" attributeType="String" syncable="YES"/>
+    </entity>
+    <elements>
+        <element name="ContactsData" positionX="-144" positionY="36" width="128" height="135"/>
+        <element name="Entity" positionX="-353" positionY="207" width="128" height="45"/>
+        <element name="UserData" positionX="-351" positionY="36" width="128" height="120"/>
+    </elements>
+</model>

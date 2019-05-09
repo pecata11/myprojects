@@ -1,0 +1,126 @@
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Presentation;
+using DocumentFormat.OpenXml;
+using System.Collections.Generic;
+using System;
+using System.Globalization;
+using System.Linq;
+
+
+namespace ClearSlideLibrary.Dom
+{
+    public class PPTShapeBase
+    {
+        public PPTVisualPPTShapeProp VisualShapeProp { get; set; }
+        public PPTNonVisualShapeProp NonVisualShapeProp { get; set; }
+        public bool Invisible { get; set; }
+        public bool Animatable { get; set; }
+        public String ClickLinkUrl { get; set; }
+        public String HoverLinkUrl { get; set; }
+        public DocumentFormat.OpenXml.Drawing.ListStyle shapeListStyle { get; set; }
+        public DocumentFormat.OpenXml.Drawing.TextAnchoringTypeValues VerticalAlign { get; set; }
+        public int fontScale = 100000;
+
+        protected void SetSlideLayoutVisualShapeProperties(SlidePart slidePart, Shape shape)
+        {
+            VisualShapeProp = new PPTVisualPPTShapeProp();
+
+            ShapeTree shapeTree =
+                slidePart.SlideLayoutPart.SlideLayout.CommonSlideData.ShapeTree;
+
+            if (shapeTree != null)
+            {
+              //  var layoutShape = shapeTree.GetFirstChild<Shape>();
+                GetShapesPropFromMasterPartLayout(slidePart, shape, 1);
+
+                if (shape.ShapeProperties!=null && shape.ShapeProperties.Transform2D != null)
+                {
+                    VisualShapeProp.Extents = shape.ShapeProperties.Transform2D.Extents;
+                    VisualShapeProp.Offset = shape.ShapeProperties.Transform2D.Offset;
+                }
+            }
+        }
+
+        private void GetShapesPropFromMasterPartLayout(SlidePart slidePart, Shape shape, int slideNumber)
+        {
+
+            if (shape.NonVisualShapeProperties.ApplicationNonVisualDrawingProperties.PlaceholderShape == null) //If there is no placeholder
+                return; 
+            IEnumerator<SlideLayoutPart> slPart = slidePart.SlideLayoutPart.
+                SlideMasterPart.SlideLayoutParts.GetEnumerator();
+
+            string shapeHolderIndex =
+               shape.NonVisualShapeProperties.ApplicationNonVisualDrawingProperties.PlaceholderShape.Index;
+
+            string shapeHolderType =
+                shape.NonVisualShapeProperties.ApplicationNonVisualDrawingProperties.
+                                               PlaceholderShape.Type;
+            
+            if(shapeHolderType.Equals("title") || 
+                shapeHolderType.Equals("sldNum") ||
+                shapeHolderType.Equals("dt") ||
+                shapeHolderType.Equals("body") ||
+                shapeHolderType.Equals("ftr"))
+            { 
+
+            var masterShapes =
+                slidePart.SlideLayoutPart.SlideMasterPart.SlideMaster.CommonSlideData.ShapeTree.Descendants<Shape>();
+
+            foreach (Shape masterShape in masterShapes)
+                if (masterShape.NonVisualShapeProperties.ApplicationNonVisualDrawingProperties.PlaceholderShape != null)
+                {
+                    string placeHolderIndex =
+                        masterShape.NonVisualShapeProperties.ApplicationNonVisualDrawingProperties.PlaceholderShape.Index;
+
+                    string placeHolderType = masterShape.NonVisualShapeProperties.ApplicationNonVisualDrawingProperties.PlaceholderShape.Type;
+
+                    if (shapeHolderType == placeHolderType &&
+                        shapeHolderIndex == placeHolderIndex)
+                    {
+                        fillPropertiesFromMasterShape(masterShape);
+                    }
+                }
+
+            }
+
+            var layoutShapes = slidePart.SlideLayoutPart.SlideLayout.Descendants<Shape>();
+
+            foreach (Shape masterShape in layoutShapes)
+                if (masterShape.NonVisualShapeProperties.ApplicationNonVisualDrawingProperties.PlaceholderShape != null)
+                {
+                    string placeHolderIndex =
+                        masterShape.NonVisualShapeProperties.ApplicationNonVisualDrawingProperties.PlaceholderShape.Index;
+
+                    string placeHolderType = masterShape.NonVisualShapeProperties.ApplicationNonVisualDrawingProperties.PlaceholderShape.Type;
+
+                    if (shapeHolderType == placeHolderType &&
+                        shapeHolderIndex == placeHolderIndex)
+                    {
+                        fillPropertiesFromMasterShape(masterShape);
+                    }
+                }
+        }
+
+        private void fillPropertiesFromMasterShape(DocumentFormat.OpenXml.Presentation.Shape masterShape)
+        {
+            if (null != masterShape.TextBody)
+            {
+                if (masterShape.TextBody.ListStyle != null)
+                    shapeListStyle = masterShape.TextBody.ListStyle;
+                if (masterShape.TextBody.BodyProperties != null && masterShape.TextBody.BodyProperties.Anchor!=null)
+                    VerticalAlign = masterShape.TextBody.BodyProperties.Anchor;
+
+                if (masterShape.TextBody.BodyProperties != null && 
+                    masterShape.TextBody.BodyProperties.GetFirstChild<DocumentFormat.OpenXml.Drawing.NormalAutoFit>() != null &&
+                      masterShape.TextBody.BodyProperties.GetFirstChild<DocumentFormat.OpenXml.Drawing.NormalAutoFit>().FontScale != null)
+                    fontScale = masterShape.TextBody.BodyProperties.GetFirstChild<DocumentFormat.OpenXml.Drawing.NormalAutoFit>().FontScale.Value;
+
+            }
+            if (masterShape.ShapeProperties.Transform2D != null)
+            {
+                VisualShapeProp.Extents = masterShape.ShapeProperties.Transform2D.Extents;
+                VisualShapeProp.Offset = masterShape.ShapeProperties.Transform2D.Offset;
+            }
+        }
+    }
+}

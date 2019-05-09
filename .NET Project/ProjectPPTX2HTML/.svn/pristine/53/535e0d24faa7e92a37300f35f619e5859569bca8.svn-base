@@ -1,0 +1,78 @@
+﻿using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Presentation;
+
+namespace ClearSlideLibrary.Dom
+{
+    public class PPTGraphicFrame : PPTShapeBase
+    {
+        public PPTGraphicFrame(SlidePart slidePart, GraphicFrame gfarame,
+                               int slideNumber)
+        {
+            SetGraphicFrameVisualProperties(slidePart, gfarame);
+            SetGraphicFrameNonVisualProperties(slidePart,gfarame, slideNumber);
+        }
+
+
+        private void SetGraphicFrameNonVisualProperties(SlidePart slidePart,GraphicFrame gfarame,
+                                                        int slideNumber)
+        {
+
+            if (gfarame.NonVisualGraphicFrameProperties.NonVisualDrawingProperties.HyperlinkOnClick != null)
+                foreach (HyperlinkRelationship link in slidePart.HyperlinkRelationships)
+                    if (link.Id.Equals(gfarame.NonVisualGraphicFrameProperties.NonVisualDrawingProperties.HyperlinkOnClick.Id))
+                        ClickLinkUrl = link.Uri.IsAbsoluteUri ? link.Uri.AbsoluteUri : link.Uri.OriginalString;
+
+            if (gfarame.NonVisualGraphicFrameProperties.NonVisualDrawingProperties.HyperlinkOnHover != null)
+                foreach (HyperlinkRelationship link in slidePart.HyperlinkRelationships)
+                    if (link.Id.Equals(gfarame.NonVisualGraphicFrameProperties.NonVisualDrawingProperties.HyperlinkOnHover.Id))
+                        HoverLinkUrl = link.Uri.IsAbsoluteUri ? link.Uri.AbsoluteUri : link.Uri.OriginalString;
+
+            var nonVisualShapeProp = new PPTNonVisualShapeProp
+                                         {
+                                             Id = "s1s" + //HARD CODED: we split it into separate HTML files!
+                                                  gfarame.NonVisualGraphicFrameProperties.NonVisualDrawingProperties.Id,
+                                             Name = gfarame.LocalName,
+                                             Type = "PPTGraphicFrame"
+                                         };
+            base.NonVisualShapeProp = nonVisualShapeProp;
+        }
+
+        private void SetGraphicFrameVisualProperties(SlidePart slidePart,
+                                                     GraphicFrame gfarame)
+        {
+            base.VisualShapeProp = new PPTVisualPPTShapeProp();
+            if (gfarame.Transform != null)
+            {
+                base.VisualShapeProp.Extents = gfarame.Transform.Extents;
+                base.VisualShapeProp.Offset = gfarame.Transform.Offset;
+            }
+            else
+            {
+                //Petco change get properties from layout for GraphicFrame object.
+                DocumentFormat.OpenXml.Presentation.ShapeTree shapeTree =
+                   slidePart.SlideLayoutPart.SlideLayout.CommonSlideData.ShapeTree;
+                DocumentFormat.OpenXml.Presentation.GraphicFrame layoutShape;
+                if (shapeTree != null)
+                {
+                    layoutShape = shapeTree.GetFirstChild<DocumentFormat.OpenXml.Presentation.GraphicFrame>();
+                    if (layoutShape.Transform != null)
+                    {
+                        base.VisualShapeProp.Extents = layoutShape.Transform.Extents;
+                        base.VisualShapeProp.Offset = layoutShape.Transform.Offset;
+                    }
+                }
+            }
+        }
+
+        public void CreateImage(string targetDir)
+        {
+            /*
+            Image image = base.SourceImage;
+            Size size = new Size(base.shPr.PixelWidth, base.shPr.PixelHeight);
+
+            string path = Path.Combine(targetDir, base.nvSpPr.Id + defaultImageType );
+            //image.Save(Path.Combine(path));
+            */
+        }
+    }
+}

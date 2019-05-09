@@ -1,0 +1,315 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using DocumentFormat.OpenXml;
+using DocumentFormat.OpenXml.Drawing;
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Presentation;
+
+
+namespace ClearSlideLibrary.Dom.PPTTexts
+{
+
+    public class PPTRunProperties
+    {
+        private const int FontPoint = 100;
+
+        public double FontSize { get; set; }
+        public int Top { get; set; }
+        public int Left { get; set; }
+        public int Spacing { get; set; }
+        public string FontFamily { get; set; }
+        public string FontColor { get; set; }
+        public string Text { get; set; }
+        public bool Bold { get; set; }
+        public bool Italic { get; set; }
+        public string Underline { get; set; }
+        public bool Invisible { get; set; }
+        public bool Animatable { get; set; }
+        public bool isBreak { get; set; }
+        public bool isBullet { get; set; }
+        public int bulletSize { get; set; }
+        public PPTSlide slide { get; set; }
+
+        public PPTRunProperties(PPTSlide slide)
+        {
+            //Default Fonts
+            this.slide = slide;
+            this.FontFamily = "Calibri";
+            this.FontSize = 32;
+            this.Bold = false;
+            this.Italic = false;
+            this.FontColor = "#000000";
+            this.Top = 0;
+            this.Left = 0;
+        }
+
+        public PPTRunProperties(PPTRunProperties copy)
+        {
+            this.FontColor = copy.FontColor;
+            this.FontFamily = copy.FontFamily;
+            this.FontSize = copy.FontSize;
+            this.Top = copy.Top;
+            this.Left = copy.Left;
+            this.Italic = copy.Italic;
+            this.Bold = copy.Bold;
+            this.Invisible = copy.Invisible;
+            this.isBreak = copy.isBreak;
+            this.Animatable = copy.Animatable;
+            this.Spacing = copy.Spacing;
+            this.Text = copy.Text;
+            this.slide = copy.slide;
+        }
+
+        public void SetRunProperties(RunProperties runProperties, 
+                     DocumentFormat.OpenXml.Presentation.Shape shape,
+                     ref LinkedList<string> effectShapes)
+        {
+            if (runProperties != null)
+            {
+                EffectList effects = runProperties.GetFirstChild<EffectList>();
+                if (effects != null && effects.HasChildren)
+                {
+                    UInt32Value id = shape.NonVisualShapeProperties.NonVisualDrawingProperties.Id;
+                    effectShapes.AddLast(slide.slideIndex + "_" + id.Value);
+                }
+
+                //get the text color.
+                var solidFill = runProperties.GetFirstChild<SolidFill>();
+                if (solidFill != null)
+                {
+                    this.ReadSolidFillColors(solidFill);
+                }
+                if (runProperties.FontSize != null)
+                {
+                    FontSize = runProperties.FontSize / FontPoint;
+                }
+                if (runProperties.Bold != null)
+                {
+                    Bold = runProperties.Bold;
+                }
+
+                if (runProperties.Italic != null)
+                {
+                    Italic = runProperties.Italic;
+                }
+                if (runProperties.Underline != null)
+                {
+                    Underline = runProperties.Underline.Value.ToString();
+                }
+                if (runProperties.Spacing != null)
+                {
+                    Spacing = runProperties.Spacing.Value;
+                }
+
+                var latinFonts = runProperties.GetFirstChild<LatinFont>();
+                var coplexScriptFonts = runProperties.Descendants<ComplexScriptFont>();
+
+                if (latinFonts != null)
+                {
+                    this.ReadFontFamilyFromTheme(latinFonts);
+                }
+                else if (coplexScriptFonts.GetEnumerator().Current != null)
+                {
+                   FontFamily = coplexScriptFonts.GetEnumerator().Current.Typeface;
+                }
+            }
+        }
+
+        public void ReadSolidFillColors(SolidFill solidFill)
+        {
+            if (solidFill.RgbColorModelHex != null)
+            {
+                FontColor = "#" + solidFill.RgbColorModelHex.Val;
+            }
+            else if (solidFill.RgbColorModelPercentage != null)
+            {
+                int red = solidFill.RgbColorModelPercentage.RedPortion.Value;
+                int green = solidFill.RgbColorModelPercentage.GreenPortion.Value;
+                int blue = solidFill.RgbColorModelPercentage.BluePortion.Value;
+
+                var colorFromRGB = System.Drawing.Color.FromArgb(red, green, blue);
+                string fontcolor = System.Drawing.ColorTranslator.ToHtml(colorFromRGB);
+                FontColor = fontcolor;
+            }
+            else if (solidFill.SystemColor != null)
+            {
+                FontColor = "#" + solidFill.SystemColor.LastColor.Value;
+            }
+            if (solidFill.SchemeColor != null)
+            {
+                this.ReadThemeSchemeColor(solidFill.SchemeColor);
+            }
+        }
+
+        public void ReadFontFamilyFromTheme(LatinFont latinFonts)
+        {
+            FontScheme allSchemeFonts =
+                    slide.SlideLayoutPart.SlideMasterPart.ThemePart.Theme
+                    .ThemeElements.FontScheme;
+
+            var minorFont = allSchemeFonts.GetFirstChild<MinorFont>();
+            var majorFont = allSchemeFonts.GetFirstChild<MajorFont>();
+            if (latinFonts != null)
+            {
+                FontFamily = latinFonts.Typeface.Value;
+
+                if (latinFonts.Typeface.Value.Equals("+mj-lt"))
+                {
+                    FontFamily = majorFont.LatinFont.Typeface.Value;
+                }
+                else if (latinFonts.Typeface.Value.Equals("+mj-cs"))
+                {
+                    FontFamily = majorFont.ComplexScriptFont.Typeface.Value;
+                }
+                else if (latinFonts.Typeface.Value.Equals("+mj-ea"))
+                {
+                    FontFamily = majorFont.EastAsianFont.Typeface.Value;
+                }
+                else if (latinFonts.Typeface.Value.Equals("+mn-lt"))
+                {
+                    FontFamily = minorFont.LatinFont.Typeface.Value;
+                }
+                else if (latinFonts.Typeface.Value.Equals("+mn-cs"))
+                {
+                    FontFamily = minorFont.ComplexScriptFont.Typeface.Value;
+                }
+                else if (latinFonts.Typeface.Value.Equals("+mn-ea"))
+                {
+                    FontFamily = minorFont.EastAsianFont.Typeface.Value;
+                }
+            }
+        }
+        public void ReadThemeSchemeColor(SchemeColor schemeColor)
+        {
+            if (schemeColor.Val == "bg1")
+            {
+                Light1Color light1Color = slide.SlideLayoutPart.SlideMasterPart.
+                    ThemePart.Theme.ThemeElements.ColorScheme.Light1Color;
+                if (light1Color.RgbColorModelHex != null)
+                {
+                    FontColor = "#" + light1Color.RgbColorModelHex.Val.Value;
+                }
+                else if (light1Color.SystemColor != null)
+                {
+                    FontColor = "#" + light1Color.SystemColor.LastColor.Value;
+                }
+            }
+            else if (schemeColor.Val == "bg2")
+            {
+                Light2Color light2Color = slide.SlideLayoutPart.SlideMasterPart.
+                    ThemePart.Theme.ThemeElements.ColorScheme.Light2Color;
+                if (light2Color.RgbColorModelHex != null)
+                {
+                    FontColor = "#" + light2Color.RgbColorModelHex.Val.Value;
+                }
+                else if (light2Color.SystemColor != null)
+                {
+                    FontColor = "#" + light2Color.SystemColor.LastColor.Value;
+                }
+            }
+            else if (schemeColor.Val == "tx1")
+            {
+                Dark1Color dark1Color = slide.SlideLayoutPart.SlideMasterPart.
+                   ThemePart.Theme.ThemeElements.ColorScheme.Dark1Color;
+                if (dark1Color.RgbColorModelHex != null)
+                {
+                    FontColor = "#" + dark1Color.RgbColorModelHex.Val.Value;
+                }
+                else if (dark1Color.SystemColor != null)
+                {
+                    FontColor = "#" + dark1Color.SystemColor.LastColor.Value;
+                }
+            }
+            else if (schemeColor.Val == "tx2")
+            {
+                Dark2Color dark2Color = slide.SlideLayoutPart.SlideMasterPart.
+                 ThemePart.Theme.ThemeElements.ColorScheme.Dark2Color;
+                if (dark2Color.RgbColorModelHex != null)
+                {
+                    FontColor = "#" + dark2Color.RgbColorModelHex.Val.Value;
+                }
+                else if (dark2Color.SystemColor != null)
+                {
+                    FontColor = "#" + dark2Color.SystemColor.LastColor.Value;
+                }
+            }
+            else if (schemeColor.Val == "hlink")
+            {
+                Hyperlink HyperLink = slide.SlideLayoutPart.SlideMasterPart.
+                 ThemePart.Theme.ThemeElements.ColorScheme.Hyperlink;
+                if (HyperLink.RgbColorModelHex != null)
+                {
+                    FontColor = "#" + HyperLink.RgbColorModelHex.Val.Value;
+                }
+            }
+            else if (schemeColor.Val == "folHlink")
+            {
+                FollowedHyperlinkColor folHyperLink = slide.SlideLayoutPart.SlideMasterPart.
+                 ThemePart.Theme.ThemeElements.ColorScheme.FollowedHyperlinkColor;
+                if (folHyperLink.RgbColorModelHex != null)
+                {
+                    FontColor = "#" + folHyperLink.RgbColorModelHex.Val.Value;
+                }
+            }
+            this.ReadAccentSchemeColors(schemeColor);
+        }
+        public void ReadAccentSchemeColors(SchemeColor schemeColor)
+        {
+            for (int i = 1; i <= 6; i++)
+            {
+                if (schemeColor.Val == "accent" + i)
+                {
+                    switch (i)
+                    {
+                        case 1:
+                            {
+                                Accent1Color c = slide.SlideLayoutPart.SlideMasterPart.
+                                        ThemePart.Theme.ThemeElements.ColorScheme.Accent1Color;
+                                if (c.RgbColorModelHex != null)
+                                    FontColor = "#" + c.RgbColorModelHex.Val.Value;
+                            } break;
+                        case 2:
+                            {
+                                Accent2Color c = slide.SlideLayoutPart.SlideMasterPart.
+                                        ThemePart.Theme.ThemeElements.ColorScheme.Accent2Color;
+                                if (c.RgbColorModelHex != null)
+                                    FontColor = "#" + c.RgbColorModelHex.Val.Value;
+                            } break;
+                        case 3:
+                            {
+                                Accent3Color c = slide.SlideLayoutPart.SlideMasterPart.
+                                           ThemePart.Theme.ThemeElements.ColorScheme.Accent3Color;
+                                if (c.RgbColorModelHex != null)
+                                    FontColor = "#" + c.RgbColorModelHex.Val.Value;
+                            } break;
+                        case 4:
+                            {
+                                Accent4Color c = slide.SlideLayoutPart.SlideMasterPart.
+                                    ThemePart.Theme.ThemeElements.ColorScheme.Accent4Color;
+                                if (c.RgbColorModelHex != null)
+                                    FontColor = "#" + c.RgbColorModelHex.Val.Value;
+                            } break;
+                        case 5:
+                            {
+                                Accent5Color c = slide.SlideLayoutPart.SlideMasterPart.
+                                           ThemePart.Theme.ThemeElements.ColorScheme.Accent5Color;
+                                if (c.RgbColorModelHex != null)
+                                    FontColor = "#" + c.RgbColorModelHex.Val.Value;
+                            } break;
+                        case 6:
+                            {
+                                Accent6Color c = slide.SlideLayoutPart.SlideMasterPart.
+                                           ThemePart.Theme.ThemeElements.ColorScheme.Accent6Color;
+                                if (c.RgbColorModelHex != null)
+                                    FontColor = "#" + c.RgbColorModelHex.Val.Value;
+                            } break;
+                        default: { } break;
+                    }
+                }
+            }
+        }
+    }
+}

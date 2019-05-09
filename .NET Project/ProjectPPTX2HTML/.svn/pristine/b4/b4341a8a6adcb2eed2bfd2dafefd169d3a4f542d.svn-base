@@ -1,0 +1,13 @@
+﻿namespace ClearSlideLibrary.Animations
+{
+    internal class TransitionAnimation : SimpleAnimation
+    {
+        public bool AdvanceOnClick { get; set; }
+
+        public override string GetJsonString()
+        {
+            return "{c0:" + GetObjectIdForJSON() + ",c1:" + Start + ",c2:" + Length + ",c3:" + Repetitions + ",c4:" + InitialState +
+                   ",c5:'" + Type + "',s0:" + AdditionalData + "},v:0,n:" + (AdvanceOnClick ? "0" : "1");
+        }
+    }
+}

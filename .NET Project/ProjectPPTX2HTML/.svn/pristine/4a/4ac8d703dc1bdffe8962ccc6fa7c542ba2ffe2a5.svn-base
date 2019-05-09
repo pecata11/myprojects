@@ -1,0 +1,185 @@
+﻿using System;
+using System.Collections.Generic;
+using ClearSlideLibrary.Animations;
+using ClearSlideLibrary.Dom.PPTTexts;
+using ClearSlideLibrary.PPTBuilder;
+using DocumentFormat.OpenXml;
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Presentation;
+
+namespace ClearSlideLibrary.Dom
+{
+    public class PPTSlide : PPTShapeBase
+    {
+
+        public PPTSlide(SlidePart slidePart, int slideIndex, DefaultTextStyle defaultTextStyle)
+        {
+            this.slideIndex = slideIndex;
+            this.defaultTextStyle = defaultTextStyle;
+            SlideLayoutPart = slidePart.SlideLayoutPart;
+            SetShapeNonVisualProperties(slidePart);
+            SetSpecificProperties(slidePart);
+            Id = "s1s0";
+            Transition = JSONGenerator.GenerateTransitionAnimationObject(slidePart.Slide.Transition);
+            Animations = new List<IAnimation>();
+            AddAnimations(slidePart.Slide.Timing, Animations);
+        }
+
+
+        //Slide specific properties
+        public DefaultTextStyle defaultTextStyle { get; set; }
+        public PPTContainerShape ContainerShape { get; set; }
+        public TextStyles textStyles { get; set; }
+        public SlideLayoutPart SlideLayoutPart { get; set; }
+        public List<IAnimation> Animations { get; set; }
+        public string Id { get; set; }
+        public IAnimation Transition { get; set; }
+        public int slideIndex;
+
+        //Petco:Check if there is objects with animation.
+        public void CheckAndSetAnimatableProperty(string animObjectId)
+        {
+            int tryParse = 0;
+            if (int.TryParse(animObjectId, out tryParse))
+            {
+
+                foreach (PPTShapeBase shape in ContainerShape.Elements)
+                    SetAnimatable(animObjectId, shape);
+            }
+            else
+            {
+                foreach (PPTShapeBase shapeBase in ContainerShape.Elements)
+                    if (typeof(PPTShape).Equals(shapeBase.GetType()) && ((PPTShape)shapeBase).IsText)
+                        foreach (PPTParagraph text in ((PPTShape)shapeBase).Texts)
+                        {
+                            if ((shapeBase.NonVisualShapeProp.Id + "p" + text.Paragraph).Equals("s1s" + animObjectId))
+                            {
+                                text.Animatable = true;
+                            }
+                        }
+            }
+        }
+
+        private static void SetAnimatable(string animObjectId, PPTShapeBase bshape)
+        {
+            string shapeId = bshape.NonVisualShapeProp.Id;
+            string shapeObjectId = "s1s" + animObjectId;
+            if (shapeId.Equals(shapeObjectId))
+            {
+                bshape.Animatable = true;
+            }
+        }
+
+        public void MakeShapeInvisible(String shapeId)
+        {
+            foreach (PPTShapeBase shape in ContainerShape.Elements)
+                if (shape.NonVisualShapeProp.Id.Equals(shapeId))
+                {
+                    shape.Invisible = true;
+                    return;
+                }
+                else if (typeof(PPTShape).Equals(shape.GetType()) && ((PPTShape)shape).IsText)
+                {
+                    foreach (PPTParagraph text in ((PPTShape)shape).Texts)
+                        if ((shape.NonVisualShapeProp.Id + "p" + text.Paragraph).Equals(shapeId))
+                        {
+                            text.Invisible = true;
+                            return;
+                        }
+                }
+              
+        }
+
+        public void AddAnimations(OpenXmlCompositeElement element, List<IAnimation> resultList)
+        {
+            if (element==null)
+                return;
+
+            List<AnimateMotion> motions = new List<AnimateMotion>();
+            IAnimation animationForThisNode = null;
+            if (element.GetType().Equals(typeof(CommonTimeNode)))
+            {
+                CommonTimeNode node = (CommonTimeNode)element;
+                animationForThisNode = new JSONGenerator(this).getSimpleAnimationFromCommonTimeNodePreset(node);
+
+                if (animationForThisNode != null)
+                {
+                    resultList.Add(animationForThisNode);
+                    //Check if object id is presented in animation list.
+                    CheckAndSetAnimatableProperty(animationForThisNode.ObjectId);
+
+                    if ((animationForThisNode.InnerAnimations == null ||
+                         animationForThisNode.InnerAnimations.Count == 0) &&
+                        animationForThisNode.IsItEntranceAnimation())
+
+                        MakeShapeInvisible("s1s" + animationForThisNode.ObjectId);
+                    else if (animationForThisNode.InnerAnimations != null)
+                        foreach (IAnimation anAnimation in animationForThisNode.InnerAnimations)
+                            if (anAnimation.IsItEntranceAnimation())
+                                MakeShapeInvisible("s1s" + animationForThisNode.ObjectId);
+                    return;
+                }
+                else
+                {
+                    /*
+                     * Sometimes there are common time nodes without animations in them. They are used for grouping animations.                      
+                     * Usually animations are grouped for timing purposes like adding delay to all, or start a group after another. 
+                     * It's a tree structure and here we try to follow it as much as possible. Later we will strip the unnecessary nodes 
+                     */
+
+                    animationForThisNode = new SimpleAnimation();
+                    if (node.NodeType != null)
+                        ((SimpleAnimation)animationForThisNode).timingType = node.NodeType;
+                    int delay = 0;
+                    if (node.StartConditionList != null)
+                        foreach (Condition cond in node.StartConditionList)
+                            if (cond.Delay != null && "indefinite" != cond.Delay.Value && cond.Delay.HasValue)
+                                delay = delay + int.Parse(cond.Delay.Value);
+                    if (delay > 0)
+                    {
+                        animationForThisNode.Start = delay;
+                    }
+                }
+
+                if (animationForThisNode != null)
+                {
+                    animationForThisNode.InnerAnimations = new List<IAnimation>();
+                    resultList.Add(animationForThisNode);
+                }
+
+            }
+
+            //Go recursive in the Open XML tree
+
+            foreach (OpenXmlElement obj in element.ChildElements)
+            {
+                if (obj.GetType().IsSubclassOf(typeof(OpenXmlCompositeElement)))
+                {
+                    if (animationForThisNode == null)
+                        AddAnimations((OpenXmlCompositeElement)obj, resultList);
+                    else
+                        AddAnimations((OpenXmlCompositeElement)obj, animationForThisNode.InnerAnimations);
+                }
+            }
+        }
+
+        private void SetSpecificProperties(SlidePart slidePart)
+        {
+            textStyles = slidePart.SlideLayoutPart.SlideMasterPart.SlideMaster.TextStyles;
+            var groupShapeBuilder = new PPTContainerShapeBuilder();
+            ContainerShape = groupShapeBuilder.GetPPTContainerShape(slidePart, this);
+           
+        }
+
+        private void SetShapeNonVisualProperties(SlidePart slidePart)
+        {
+            var nonVisualShapeProp = new PPTNonVisualShapeProp
+            {
+                Id = "s1s1",
+                Name = slidePart.Slide.LocalName,
+                Type = "PPTSlide"
+            };
+            base.NonVisualShapeProp = nonVisualShapeProp;
+        }
+    }
+}

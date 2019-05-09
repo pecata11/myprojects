@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClearSlideLibrary", "ClearSlideLibrary\ClearSlideLibrary.csproj", "{20274D95-0502-4343-8442-82B0DBAB6E13}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClearSlideConsole", "ClearSlideConsole\ClearSlideConsole.csproj", "{35272669-0FB8-42BD-89C5-9D1F7CE08498}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{20274D95-0502-4343-8442-82B0DBAB6E13}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{20274D95-0502-4343-8442-82B0DBAB6E13}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{20274D95-0502-4343-8442-82B0DBAB6E13}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{20274D95-0502-4343-8442-82B0DBAB6E13}.Release|Any CPU.Build.0 = Release|Any CPU
+		{35272669-0FB8-42BD-89C5-9D1F7CE08498}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{35272669-0FB8-42BD-89C5-9D1F7CE08498}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{35272669-0FB8-42BD-89C5-9D1F7CE08498}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{35272669-0FB8-42BD-89C5-9D1F7CE08498}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

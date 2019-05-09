@@ -1,0 +1,163 @@
+﻿using DocumentFormat.OpenXml.Presentation;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace ClearSlideLibrary.Animations
+{
+    /*
+     *   Generates animation for a motion path. I am not sure if it works for all kinds of paths because there are lines, curves, lassos etc.
+     *   It calculates the distance for each part of the path (each curve, line etc - not between each point). 
+     *   We calculate the whole distance and give each part timing =  (PartDistance / WholeDistance) * wholeTime.
+     *   The speed in the path is constant. In PowerPoint there is acceleration and deceleration but we don't care about that yet ;)
+     */
+    class MotionPathAnimation : SimpleAnimation
+    {
+        private List<PathPart> motionPath;
+        private const int MultiplierX= 720;
+        private const int MultiplierY = 540;
+
+        public MotionPathAnimation(CommonTimeNode commonTimeNode, int slideIndex)
+        {
+            InitialState = 4;
+            timingType = commonTimeNode.NodeType;
+            Type = AnimationTypes.MotionPath;
+            AnimateMotion motion = null;
+            foreach (Object xmlEl in commonTimeNode.Descendants())
+                if (xmlEl.GetType().Equals(typeof(AnimateMotion)))
+                    motion = (AnimateMotion)xmlEl;
+            if (motion == null)
+                return;
+            String path = motion.Path.Value;
+            String[] parts = path.Split();
+            motionPath = new List<PathPart>();            
+            int indexPart = -1;
+            bool isX = true;
+            foreach (string part in parts)
+            {
+                if ("".Equals(part) || "E".Equals(part))  //We add our End tag 
+                    continue;
+                Double coords = 0.0;
+                if (!Double.TryParse(part, NumberStyles.Float, CultureInfo.InvariantCulture, out coords))
+                {
+                    isX = true;
+                    if(indexPart>=0){  //FIX FOR POINTS WITH 3 COORDINATES UNTIL WE KNOW WHAT THEY ARE.
+                        List<PathPoint> previousPartPoints=motionPath[indexPart].points;
+                        if (previousPartPoints[previousPartPoints.Count - 1].Y.CompareTo(0) == 0)
+                                previousPartPoints.Remove(previousPartPoints[previousPartPoints.Count - 1]);                           
+                    }
+
+                    indexPart++;
+                    motionPath.Add(new PathPart());
+                    motionPath[indexPart].typeCharacter = part;
+                }
+                else if(isX)
+                {
+                    coords = coords * MultiplierX;
+                    PathPoint newPoint=new PathPoint();
+                    newPoint.X=coords;
+                    motionPath[indexPart].points.Add(newPoint);   // We have a new point
+                    isX = !isX;
+                }else{
+                    coords = coords * MultiplierY;
+                    motionPath[indexPart].points[motionPath[indexPart].points.Count-1].Y=coords;  //Set Y for the last point
+                    isX = !isX;
+                }
+            }
+          
+
+                FixAnimationTimings(motion.CommonBehavior, slideIndex);
+                generateAdditionDataString(motionPath);
+            
+        }
+
+        private void generateAdditionDataString(List<PathPart> motionPath)
+        {
+            double wholeDistance = 0.0;
+            PathPoint lastPoint = null;
+            foreach (PathPart part in motionPath)
+            {
+                wholeDistance += part.Distance(lastPoint);
+                lastPoint = part.LastPoint();
+            }
+            PathPart previousPart = null;
+            String result="";
+            foreach (PathPart part in motionPath)
+            {
+                result += "|" + part.typeCharacter+" ";
+                bool needsComma = false;
+                if (previousPart != null)
+                {
+                    needsComma = true;
+                    result += previousPart.LastPoint().X.ToString("0.##########", CultureInfo.CreateSpecificCulture("en-GB")) + ","+
+                                previousPart.LastPoint().Y.ToString("0.##########", CultureInfo.CreateSpecificCulture("en-GB"));                    
+                }
+                foreach (PathPoint point in part.points)
+                {
+                    result +=   ( needsComma ? "," : "" )+
+                                point.X.ToString("0.##########", CultureInfo.CreateSpecificCulture("en-GB")) + "," +
+                                point.Y.ToString("0.##########", CultureInfo.CreateSpecificCulture("en-GB"));
+                    needsComma = true;
+                }
+                if (previousPart != null) //First part doesn't have timing
+                {
+                    double timing = (part.Distance(previousPart.LastPoint()) / wholeDistance) * ((double)Length / (double)1000);
+                    result += "," + timing.ToString("0.##########", CultureInfo.CreateSpecificCulture("en-GB"));
+                }
+                    
+                previousPart = part;
+            }
+
+            result += "|E " + previousPart.LastPoint().X.ToString("0.##########", CultureInfo.CreateSpecificCulture("en-GB")) + "," +
+                                previousPart.LastPoint().Y.ToString("0.##########", CultureInfo.CreateSpecificCulture("en-GB"));
+            AdditionalData = "'" + result + "'";
+
+        }
+
+
+        private class PathPart
+        {
+            public string typeCharacter { get; set; }
+            public List<PathPoint> points {get;set; }
+            public PathPart() {
+                points = new List<PathPoint>();
+            }
+            public PathPoint LastPoint()
+            {
+                if (points == null || points.Count==0)
+                    return null;
+                return points[points.Count-1];
+            }
+            public double Distance(PathPoint LastPoint)
+            {
+                double result = 0.0;
+                if (points.Count == 1 && LastPoint!=null)                
+                    return distanceBetweenPoints(points[0], LastPoint);
+                PathPoint previousPoint = null;
+                foreach (PathPoint point in points)
+                {
+                     if (previousPoint != null)
+                        result += distanceBetweenPoints(point, previousPoint);
+                     previousPoint = point;
+                }
+                return result;
+            }           
+
+            private static double distanceBetweenPoints(PathPoint point1, PathPoint point2)
+            {
+                return Math.Sqrt(Math.Pow(point1.X  - point2.X, 2) + Math.Pow(point1.Y - point2.Y, 2));
+            }
+        }
+
+
+        class PathPoint
+        {
+            public double X { get; set; }
+            public double Y { get; set; }
+        }
+
+    }
+}

@@ -1,0 +1,484 @@
+function GetCurrentXYSlide(a) {
+	var slideWidth = gv.sw;
+	var c = gv.sh;
+	var left = parseInt(a.sV.elementId.style.left);
+	var top = parseInt(a.sV.elementId.style.top);
+	var f = a.sV.width;
+	var g = a.sV.height;
+	switch (a.c.additionalData) {
+	case 1:
+		a.dX = left;
+		a.dY = g * -1;
+		break;
+	case 2:
+		a.dX = slideWidth;
+		a.dY = top;
+		break;
+	case 3:
+		a.dX = left;
+		a.dY = c;
+		break;
+	case 4:
+		a.dX = f * -1;
+		a.dY = top;
+		break;
+	case 6:
+		a.dX = f * -1;
+		a.dY = g * -1;
+		break;
+	case 7:
+		a.dX = slideWidth;
+		a.dY = g * -1;
+		break;
+	case 8:
+		a.dX = slideWidth;
+		a.dY = c;
+		break;
+	case 9:
+		a.dX = f * -1;
+		a.dY = c;
+		break
+	}
+	a.fX = left;
+	a.fY = top;
+	if (a.c.state == 2) {
+		var h = a.fY;
+		a.fY = a.dY;
+		a.dY = h;
+		h = a.fX;
+		a.fX = a.dX;
+		a.dX = h
+	}
+}
+
+function startAnimations() {	
+	setProgress();
+	playCurrent();
+	play()
+	
+}
+
+var caS = document.createElement("audio")
+StylePpty = function () {};
+StylePpty.Transform = function () {
+	if (typeof this.transform == "undefined") {
+		this.transform = "transform";
+		var a = ["transform", "WebkitTransform", "msTransform", "MozTransform", "OTransform"];
+		var b;
+		var c = document.getElementsByTagName("div");
+		while (b = a.shift()) {
+			if (typeof c[0].style[b] != "undefined") {
+				this.transform = b;
+				return this.transform
+			}
+		}
+	}
+	return this.transform
+};
+var DocumentStyle = new function () {
+	if (typeof window.getComputedStyle == "undefined") {
+		this.style = function (a, b) {
+			if (typeof a.tagName != "undefined")
+				return a.currentStyle[b]
+		}
+	} else {
+		this.style = function (a, b) {
+			if (typeof a.tagName != "undefined")
+				return document.defaultView.getComputedStyle(a, null)[b]
+		}
+	}
+};
+CalculateDimensions = function (a) {
+	var childNodes = a.childNodes;
+	var styletop = -1;
+	var styleleft = -1;
+	var dimensions = {
+		height : 0,
+		width : 0
+	};
+	for (var f = 0; f < childNodes.length; f++) {
+		var g = childNodes[f];
+		if (g.nodeType == 1 && g.nodeName == "PRE") {
+			if (g.style.left != styleleft) {
+				dimensions.width += parseFloat(g.scrollWidth);
+				styleleft = g.style.left
+			}
+			if (g.style.top != styletop) {
+				dimensions.height += parseFloat(g.scrollHeight);
+				styletop = g.style.top
+			}
+		}
+	}
+	return dimensions
+};
+InitTransformation = function (a) {
+	this.transformation = a;
+	
+	this.elementId = document.getElementById(gci(this.transformation.c.objectId, gc));
+	this.elementAnimatedId = document.getElementById(gci(this.transformation.c.objectId, gc) + "c")
+	
+	if (this.elementAnimatedId == null)
+		this.elementAnimatedId = this.elementId;
+	this.height = this.elementId.style.height ? parseFloat(this.elementId.style.height) : this.elementId.parentNode.style.height ? parseFloat(this.elementId.parentNode.style.height) : parseFloat(this.elementId.scrollHeight);
+	this.width = this.elementId.style.width ? parseFloat(this.elementId.style.width) : this.elementId.parentNode.style.width ? parseFloat(this.elementId.parentNode.style.width) : parseFloat(this.elementId.scrollWidth);
+	if (this.height == 0 || this.width == 0) {
+		var b = CalculateDimensions(this.elementAnimatedId);
+		this.height = b.height;
+		this.width = b.width;
+	}
+	this.l = this.elementId.style.left ? parseFloat(this.elementId.style.left) : parseFloat(this.elementId.parentNode.style.left);
+	this.t = this.elementId.style.top ? parseFloat(this.elementId.style.top) : parseFloat(this.elementId.parentNode.style.top);
+	this.op = parseFloat(DocumentStyle.style(this.elementAnimatedId, "opacity"));
+	this.st = gt;
+	this.setTrasform = function () {
+		this.trns = this.transformation.getTranslate();
+		this.scl = this.transformation.getScale();
+		this.rta = this.transformation.getRotate();
+		this.skw = this.transformation.getSkewX()
+	};
+	this.reset = function () {
+		this.elementId.style.height = this.height + "px";
+		this.elementId.style.width = this.width + "px";
+		this.elementId.style.left = this.l + "px";
+		this.elementId.style.top = this.t + "px";
+		this.elementAnimatedId.style.opacity = this.op;
+		this.transformation.setTranslate(this.trns.x, this.trns.y);
+		this.transformation.setScale(this.scl.x, this.scl.y);
+		this.transformation.setRotate(this.rta);
+		this.transformation.setSkewX(this.skw)
+	}
+};
+BaseAnimation = function (c) {
+	this.c = c;
+	this.blks = new Array;
+	this.gtime = function () {
+		var a = gt;
+		if (this.c.repeat < 0 && this.rpdCnt > 0)
+			a = (new Date).getTime();
+		return a
+	};
+	this.initBaseAnimation = function (a) {
+		if (typeof this.sV != "undefined")
+			return false;
+		this.sV = new InitTransformation(this);
+		this.sV.setTrasform();
+		this.rpdCnt = 0;
+		this.initT = this.st = a;
+		if (typeof this.c.c6 != "undefined")
+			this.aSrc = document.getElementById(this.c.c6).src;					
+		return true
+	};   
+	this.resetBaseAnimation = function () {
+		this.pozd = false;
+		this.stpd = false;
+		for (x in this.blks) {
+			this.blks[x].pozd = false;
+			this.blks[x].stpd = false
+		}
+	};
+	this.pause = function () {
+		this.pozd = true;
+		for (x in this.blks)
+			this.blks[x].pozd = true
+	};
+	this.stop = function () {
+		this.pozd = false;
+		this.stpd = true;
+		for (x in this.blks) {
+			this.blks[x].pozd = false;
+			this.blks[x].stpd = true
+		}
+	};
+	this.reset = function () {
+		this.rpdCnt = 0;
+		this.st = this.initT;
+		this.stop();
+		this.stopCurrentAnimation();
+		if (typeof this.dltCv != "undefined")
+			this.dltCv();
+		if (typeof this.mc != "undefined")
+			this.mc.cvt.clearRect(0, 0, this.w, this.height);
+		if (typeof this.sV != "undefined")
+			this.sV.reset();
+		for (x in this.blks)
+			this.blks[x].reset()
+	};
+	this.stopCurrentAnimation = function () {
+		if (this.aSrc == caS.src && caS.canPlayType) {
+			if (!caS.paused)
+				caS.pause();
+			if (!this.pozd)
+				caS.src = null
+		}
+	};
+	this.playCurrentAnimation = function () {
+		if (!caS.canPlayType || typeof this.aSrc == "undefined" || this.aSrc == caS.src && !caS.paused)
+			return;
+		if (this.aSrc != caS.src)
+			caS.src = this.aSrc;
+		caS.play()
+	};
+	this.doRepeat = function () {
+		this.rpdCnt++;
+		if (this.rpdCnt < this.c.repeat || this.c.repeat < 0) {
+			this.st = this.c.repeat < 0 ? this.gtime() : this.st + this.c.length;
+			this.stopCurrentAnimation();
+			this.play()
+		}
+	};
+	this.setTranslate = function (a, b) {
+		var c = StylePpty.Transform();
+		var d = this.sV.elementId.style[c];
+		var e = /translate\(+[^\)]+\)/;
+		var f = "translate(" + a + "px," + b + "px)";
+		if (-1 != d.search(e))
+			d = d.replace(e, f);
+		else if (null != d)
+			d = d + f;
+		this.sV.elementId.style[c] = d
+	};
+	this.getTranslate = function () {
+		var a = {
+			x : 0,
+			y : 0
+		};
+		var b = StylePpty.Transform();
+		var c = this.sV.elementId.style[b];
+		var d = /translate\(+[^\)]+\)/;
+		var e = c.match(d);
+		if (null != e) {
+			var f = e[0].match(/[0-9.-]+|[\d]+[^p]/g);
+			a.x = parseFloat(f[0]);
+			a.y = parseFloat(f[1])
+		}
+		return a
+	};
+	this.setScale = function (a, b) {
+		var c = StylePpty.Transform();
+		var d = this.sV.elementId.style[c];
+		var e = /scale\(+[^\)]+\)/;
+		var f = "scale(" + a + "," + b + ")";
+		if (-1 != d.search(e))
+			d = d.replace(e, f);
+		else if (null != d)
+			d = d + f;
+		this.sV.elementId.style[c] = d
+	};
+	this.getScale = function () {
+		var a = {
+			x : 1,
+			y : 1
+		};
+		var b = StylePpty.Transform();
+		var c = this.sV.elementId.style[b];
+		var d = /scale\(+[^\)]+\)/;
+		var e = c.match(d);
+		if (null != e) {
+			var f = e[0].match(/[0-9.-]+|[\d]+[^p]/g);
+			a.x = parseFloat(f[0]);
+			a.y = parseFloat(f[1])
+		}
+		return a
+	};
+	this.setRotate = function (a) {
+		var b = StylePpty.Transform();
+		var c = this.sV.elementId.style[b];
+		var d = /rotate\(+[^\)]+\)/;
+		var e = "rotate(" + a + "deg)";
+		if (-1 != c.search(d))
+			c = c.replace(d, e);
+		else if (null != c)
+			c = c + e;
+		this.sV.elementId.style[b] = c
+	};
+	this.getRotate = function () {
+		var a = 0;
+		var b = StylePpty.Transform();
+		var c = this.sV.elementId.style[b];
+		var d = /rotate\(+[^\)]+\)/;
+		var e = c.match(d);
+		if (null != e) {
+			var f = e[0].match(/[0-9.-]+|[\d]+[^d]/g);
+			a = parseFloat(f[0])
+		}
+		return a
+	};
+	this.setSkewX = function (a) {
+		var b = StylePpty.Transform();
+		var c = this.sV.elementId.style[b];
+		var d = /skewX\(+[^\)]+\)/;
+		var e = "skewX(" + a + "deg)";
+		if (-1 != c.search(d))
+			c = c.replace(d, e);
+		else if (null != c)
+			c = c + e;
+		this.sV.elementId.style[b] = c
+	};
+	this.getSkewX = function () {
+		var a = 0;
+		var b = StylePpty.Transform();
+		var c = this.sV.elementId.style[b];
+		var d = /skewX\(+[^\)]+\)/;
+		var e = c.match(d);
+		if (null != e) {
+			var f = e[0].match(/[0-9.-]+|[\d]+[^d]/g);
+			a = parseFloat(f[0])
+		}
+		return a
+	};
+	this.playBlockAnimation = function () {
+		function c() {
+			if (a.pozd || a.stpd || b >= a.blks.length)
+				return;
+			while (1) {
+				if (b >= a.blks.length)
+					return;
+				var d = a.blks[b];
+				if (d.st <= a.gtime()) {
+					d.play();
+					b++
+				} else
+					break
+			}
+			Cbfun(c)
+		}
+		var a = this;
+		if (a.at == 1)
+			return;
+		var b = 0;
+		Cbfun(c)
+	}
+};
+Cv = function (a, b) {
+	this.cv = document.createElement("canvas");
+	this.cv.height = b;
+	this.cv.width = a;
+	this.cvt = this.cv.getContext("2d");
+	this.bdrawn = false;
+	this.drawCmpltDiv = function (a, b, c) {
+		var d = a.childNodes;
+		var e = d.length;
+		for (var f = 0; f < e; f++) {
+			var g = d[f];
+			if (g.nodeType != 1 || g.nodeName != "IMG")
+				continue;
+			var h = DocumentStyle.style(a, "height");
+			var i = DocumentStyle.style(a, "width");
+			var j = DocumentStyle.style(a.parentNode, "height");
+			var k = DocumentStyle.style(a.parentNode, "width");
+			var l = h && h != "100%" ? parseFloat(h) : parseFloat(j);
+			var m = i && i != "100%" ? parseFloat(i) : parseFloat(k);
+			this.cvt.drawImage(g, b, c, m, l)
+		}
+		for (var f = 0; f < e; f++) {
+			var g = d[f];
+			if (g.nodeType != 1 || g.nodeName != "PRE")
+				continue;
+			var n = g.style.left ? b + parseFloat(g.style.left) : b;
+			var o = g.style.top ? c + parseFloat(g.style.top) : c;
+			this.cvt.font = DocumentStyle.style(g, "fontStyle") + " " + DocumentStyle.style(g, "fontWeight") + " " + DocumentStyle.style(g, "fontSize") + " " + DocumentStyle.style(g, "fontFamily");
+			this.cvt.fillStyle = DocumentStyle.style(g, "color");
+			this.cvt.textBaseline = "top";
+			this.cvt.fillText(g.innerHTML, n, o)
+		}
+		for (var f = 0; f < e; f++) {
+			var g = d[f];
+			var p = DocumentStyle.style(g, "opacity");
+			if (g.nodeType != 1 || g.nodeName != "DIV" || p == "0")
+				continue;
+			var q = DocumentStyle.style(g, "left");
+			var r = DocumentStyle.style(g, "top");
+			var n = q ? b + parseFloat(q) : 0;
+			var o = r ? c + parseFloat(r) : 0;
+			this.drawCmpltDiv(g, n, o)
+		}
+		this.bdrawn = true
+	};
+	this.drawDiv = function (a) {
+		var b = a.getElementsByTagName("img");
+		var c = new Image;
+		var d = this;
+		if (b.length > 0)
+			c.src = b[0].src;
+		else
+			this.drawText(a);
+		c.onload = function () {
+			d.cvt.drawImage(c, 0, 0, c.width, c.height, 0, 0, d.cv.width, d.cv.height);
+			d.drawText(a)
+		}
+	};
+	this.drawText = function (a) {
+		var b = a.getElementsByTagName("pre");
+		var c = b.length;
+		for (var d = 0; d < c; d++) {
+			var e = b[d];
+			this.cvt.font = DocumentStyle.style(e, "fontStyle") + " " + DocumentStyle.style(e, "fontWeight") + " " + DocumentStyle.style(e, "fontSize") + " " + DocumentStyle.style(e, "fontFamily");
+			this.cvt.fillStyle = DocumentStyle.style(e, "color");
+			this.cvt.textBaseline = "bottom";
+			this.cvt.fillText(e.innerHTML, parseFloat(e.style.left), parseFloat(e.style.top) + e.scrollHeight)
+		}
+		this.bdrawn = true
+	};
+	this.apndTo = function (a) {
+	    a.appendChild(this.cv)
+	};
+	this.draw = function (a, b) {
+	    if (a.bdrawn) {
+	        if (b)
+	            this.cvt.clearRect(0, 0, this.cv.width, this.cv.height);
+	        this.cvt.drawImage(a.cv, 0, 0)
+	    }
+	}
+};
+MskAnim = function (a) {
+	this.inheritFrom = BaseAnimation;
+	this.inheritFrom(a);
+	this.initMskAnim = function (a) {
+		if (this.initBaseAnimation(a)) {
+			this.height = this.sV.h;
+			this.width = this.sV.w;
+			this.im = new Image;
+			this.bgcv = new Cv(this.width, this.height);
+			this.frcv = new Cv(this.width, this.height);
+			if (this.c.state == -1)
+				this.bgcv.drawCmpltDiv(this.sV.elementId, 0, 0);
+			else
+				this.bgcv.drawDiv(this.sV.elementAnimatedId);
+			this.fct = this.frcv.cvt;
+			this.cp = "destination-in";
+			if (this.c.state == 2)
+				this.cp = "destination-out";
+			return true
+		} else
+			return false
+	};
+	this.resetMskAnim = function () {
+		if (!this.pozd) {
+			if (this.c.state == -1)
+				this.frcv.apndTo(this.sV.elementId.parentNode);
+			else
+				this.frcv.apndTo(this.sV.elementId)
+		}
+		this.resetBaseAnimation()
+	};
+	this.doAfterEffect = function () {
+		if (this.c.state == -1) {
+			this.sV.elementId.style.opacity = 1;
+			this.reset()
+		}
+	};
+	this.dltCv = function () {
+		try {
+			if (this.c.state == 2)
+				this.sV.elementAnimatedId.style.opacity = 0;
+			if (this.c.state == 1)
+				this.sV.elementAnimatedId.style.opacity = 1;
+			this.fct.clearRect(0, 0, this.width, this.height);
+			if (this.c.state == -1)
+				this.sV.elementId.parentNode.removeChild(this.frcv.cv);
+			else
+				this.sV.elementId.removeChild(this.frcv.cv)
+		} catch (a) {}
+
+	}
+};

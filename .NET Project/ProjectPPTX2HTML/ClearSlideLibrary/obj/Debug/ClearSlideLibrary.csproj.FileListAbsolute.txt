@@ -1,0 +1,5 @@
+\\vmware-host\Shared Folders\Desktop\ProjectPPTX2HTML\ClearSlideLibrary\bin\Debug\T.dll
+\\vmware-host\Shared Folders\Desktop\ProjectPPTX2HTML\ClearSlideLibrary\bin\Debug\T.pdb
+\\vmware-host\Shared Folders\Desktop\ProjectPPTX2HTML\ClearSlideLibrary\obj\Debug\ClearSlideLibrary.csprojResolveAssemblyReference.cache
+\\vmware-host\Shared Folders\Desktop\ProjectPPTX2HTML\ClearSlideLibrary\obj\Debug\T.dll
+\\vmware-host\Shared Folders\Desktop\ProjectPPTX2HTML\ClearSlideLibrary\obj\Debug\T.pdb

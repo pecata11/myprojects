@@ -1,0 +1,466 @@
+/* HTML reset styles
+Copyright (c) 2010, Yahoo! Inc. All rights reserved.
+Code licensed under the BSD License:
+http://developer.yahoo.com/yui/license.html
+version: 2.8.1
+*/
+
+body,div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,pre,code,form,fieldset,legend,textarea,p,blockquote,th,td
+  {
+  margin: 0;
+  padding: 0;
+}
+
+.scrollDashboard {
+  max-height:600px;
+  max-width:800px;
+  overflow: auto;
+}
+
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+table td,table th {
+  vertical-align: top;
+  text-align: left;
+}
+
+fieldset,img {
+  border: 0;
+}
+
+li {
+  list-style: none;
+}
+
+h1,h2,h3,h4,h5,h6 {
+  font-size: 100%;
+  font-weight: normal;
+}
+
+body {
+  font-size: 13px;
+  font-family: Arial, Helvetica, Sans-serif;
+  color: #444;
+}
+
+a,
+a:visited
+ {
+  outline: none; /* fx 1.05, Safari, Mac IE*/
+}
+
+p {
+  line-height: 1.3em;
+  margin: 0;
+}
+
+ul {
+  list-style-position:outside;
+}
+
+[onclick],
+[for] {cursor: pointer}
+
+* {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+/* /reset */
+
+/* main button styles */
+.button { position: relative; display: inline-block; font-weight: bold; font-family: inherit; color: #fdfac2; cursor: pointer; white-space: nowrap; vertical-align: middle; border: 1px solid; border-radius: 2px; text-decoration: none !important; }
+.button:hover { text-decoration: none !important; }
+.button:visited { color: #fff; }
+.button.small { padding: 0 10px; height: 25px; line-height: 24px; font-size: 12px; }
+.ie8 .button.small { line-height: 23px; }
+.ie9 .button.small { line-height: 25px; }
+.button.small.notext { padding: 0 0 0 5px; }
+.button { padding: 0 15px; height: 30px; line-height: 28px; font-size: 14px; }
+.button.notext { padding: 0 8px; }
+.button { border: 1px solid #585858; color: #fff; background: #222222; background-image: -webkit-linear-gradient(top, #444444, #222222); /* Chrome 10+, Saf5.1+, iOS 5+ */ background-image: -moz-linear-gradient(top, #444444, #222222); /* FF3.6 */ background-image: -o-linear-gradient(top, #444444, #222222); /* Opera 11.10+ */ background-image: linear-gradient(to bottom, #444444, #222222); }
+.button:hover { color: #fff; background: #333; background-image: -webkit-linear-gradient(top, #222222, #444444); /* Chrome 10+, Saf5.1+, iOS 5+ */ background-image: -moz-linear-gradient(top, #222222, #444444); /* FF3.6 */ background-image: -o-linear-gradient(top, #222222, #444444); /* Opera 11.10+ */ background-image: linear-gradient(to bottom, #222222, #444444); }
+.button:active { background: #64676c; }
+.button.blue { border-color: #008edf #087fc3 #02669f; color: #fff; background: #32b3fc; background-image: -webkit-linear-gradient(top, #45bcff, #019cf6); /* Chrome 10+, Saf5.1+, iOS 5+ */ background-image: -moz-linear-gradient(top, #45bcff, #019cf6); /* FF3.6 */ background-image: -o-linear-gradient(top, #45bcff, #019cf6); /* Opera 11.10+ */ background-image: linear-gradient(to bottom, #45bcff, #019cf6); }
+.button.blue:hover { background: #10a4f8; background-image: -webkit-linear-gradient(top, #019cf6, #45bcff); /* Chrome 10+, Saf5.1+, iOS 5+ */ background-image: -moz-linear-gradient(top, #019cf6, #45bcff); /* FF3.6 */ background-image: -o-linear-gradient(top, #019cf6, #45bcff); /* Opera 11.10+ */ background-image: linear-gradient(to bottom, #019cf6, #45bcff); }
+.button.blue:active { background: #019cf6; background-image: -webkit-linear-gradient(top, #0da2f8, #019cf6); /* Chrome 10+, Saf5.1+, iOS 5+ */ background-image: -moz-linear-gradient(top, #0da2f8, #019cf6); /* FF3.6 */ background-image: -o-linear-gradient(top, #0da2f8, #019cf6); /* Opera 11.10+ */ background-image: linear-gradient(to bottom, #0da2f8, #019cf6); }
+.button.grey { border-color: #dddddd #dbdbdb #b8b8b8; /*     text-shadow: none; */ color: #555; background: #f2f2f2; background-image: -webkit-linear-gradient(top, #fefefe, #e6e6e6); /* Chrome 10+, Saf5.1+, iOS 5+ */ background-image: -moz-linear-gradient(top, #fefefe, #e6e6e6); /* FF3.6 */ background-image: -o-linear-gradient(top, #fefefe, #e6e6e6); /* Opera 11.10+ */ background-image: linear-gradient(to bottom, #fefefe, #e6e6e6); }
+.button.grey:hover { border-top-color: #ccc; background: #ececec; background-image: -webkit-linear-gradient(top, #e6e6e6, #fefefe); /* Chrome 10+, Saf5.1+, iOS 5+ */ background-image: -moz-linear-gradient(top, #e6e6e6, #fefefe); /* FF3.6 */ background-image: -o-linear-gradient(top, #e6e6e6, #fefefe); /* Opera 11.10+ */ background-image: linear-gradient(to bottom, #e6e6e6, #fefefe); }
+.button.grey:active { background: #e6e6e6; background-image: none; }
+.button + .button { margin-left: 15px; }
+.button.right + .button.right { margin-left: 0; margin-right: 15px; }
+
+input.button { padding-bottom: 2px; }
+
+/* /buttons */
+
+input[type="submit"]:disabled
+{
+	background:#e6e6e6;
+}
+
+input[type="text"],
+input[type="password"] {
+  height: 30px;
+  padding: 2px 6px;
+  border: 1px solid #aaa;
+  background: #FAFFBD;
+}
+
+input[type="text"].fullWidth,
+input[type="password"].fullWidth {
+  width: 100%;
+}
+
+input[type="checkbox"] {
+  position: relative;
+  top: 1px;
+}
+
+.niceForm label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.niceForm input[type="text"] + label {
+  margin-top: 20px;
+}
+
+.niceForm input[type="password"] + label {
+  margin-top: 20px;
+}
+
+.red {color: red;}
+.left {float: left;}
+.right {float: right;}
+
+.mt7 {margin-top: 7px;}
+.mt15 {margin-top: 15px;}
+
+.row:before,
+.row:after {
+  content: "";
+  display: table; 
+}
+
+.row:after { 
+  clear: both; 
+}
+
+.row { 
+  *zoom: 1; /* one simple ie7 hack so the page is not a complete mess in that browser */
+}
+
+p {
+  margin-bottom: 10px;
+}
+
+a, a:visited {
+  color: #00e;
+}
+
+body {
+  background: #888;
+  font-family: Arial, Helvetica, Sans-serif;
+}
+
+.nav {
+  background: #1b1b1b;
+}
+
+.nav ul {
+  overflow: hidden;
+}
+
+.nav ul li {
+  float: left;
+  display: block;
+}
+
+.nav ul li.right {
+  float: right;
+}
+
+.nav ul li a {
+  display: block;
+  color: #fff;
+  text-decoration: none;
+  padding: 10px 10px;
+  font-weight: bold;
+}
+
+.nav ul li a:hover {
+  color: #eee;
+  text-decoration: underline;
+}
+
+.header {
+  background: #666;
+  color: #fff;
+  padding: 20px;
+}
+
+.logo {
+  font-size: 38px;
+  letter-spacing: -1px;
+  text-shadow: 0 1px 3px rgba(0,0,0,.4), 0 0 30px rgba(0,0,0,.075);
+}
+
+.innerWidth {
+  width: 600px;
+  position: relative;
+  margin: 0 auto;
+}
+
+.page {
+  width: 600px;
+  position: relative;
+  margin: 20px auto;
+  background: #fff;
+  padding: 20px;
+  border: 1px solid #aaa;
+  box-shadow: 0px 0px 1px #333;
+}
+
+.smallWidth .innerWidth,
+.smallWidth .page {
+  width: 400px;
+}
+
+.fullWidth {width: 100%}
+
+h1 {
+  margin-top: -5px;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #ccc;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.controls {
+  overflow: hidden;
+  margin-top: 20px;
+}
+
+.tableScrollerWrapper {
+  max-height: 300px;
+  overflow: auto;
+}
+
+.feedbackTable{
+	width: 100%;
+	border:none;
+}
+
+.feedbackTable td {
+  padding: 7px 10px;
+}
+
+.styledTable {
+  width: 100%;
+  border: 1px solid #ccc;
+}
+
+.styledTable th {
+  background: #444;
+  color: #fff;
+}
+
+.styledTable th + th {
+  border-left: 1px solid #ccc;
+}
+
+.styledTable th,
+.styledTable td {
+  padding: 3px 7px;
+}
+
+.styledTable .even td {
+  background: #f6f6f6;
+}
+
+.styledTable tr + tr td {
+  border-top: 1px solid #ccc;
+}
+
+.styledTable td + td {
+  border-left: 1px solid #ccc;
+}
+
+.styledTable .smallWidth {
+  width: 120px;
+}
+
+
+
+/* quizzes page */
+
+.quizRow + .quizRow {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #ddd;
+}
+
+.quizRow .quizName,
+.quizRow .quizName a {
+  color: #444;
+  font-weight: bold;
+}
+
+/* /quizzes page */
+
+
+/* next quiz page */
+  /* in next.jsp */
+/* /next quiz page */
+
+
+/* add quiz page */
+label {
+  display: inline-block;
+  width: 120px;
+  font-weight: bold;
+}
+
+.lessonInput {
+  width: 260px;
+}
+.feedbackInput {
+  width: 260px;
+}
+.questions {
+  margin-top: 20px;
+  padding-top: 20px;
+}
+
+.question + .question {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+
+.questionTextarea {
+  width: 260px;
+  max-width: 260px;
+  min-width: 260px;
+  height: 120px;
+  max-height: 120px;
+  min-height: 120px;
+  resize: none;
+}
+
+.answerTextarea {
+  width: 260px;
+  max-width: 260px;
+  min-width: 260px;
+  height: 40px;
+  max-height: 40px;
+  min-height: 40px;
+  resize: none;
+}
+
+.imageAnswerTextarea {
+  width: 260px;
+  max-width: 260px;
+  min-width: 260px;
+  height: 30px;
+  max-height: 30px;
+  min-height: 30px;
+  resize: none;
+}
+
+
+.answer td {
+  padding-top: 10px;
+}
+
+.vtop {
+  vertical-align: top;
+}
+
+.vbottom {
+  vertical-align: bottom;
+}
+
+.vbottom-nowrap{
+	  vertical-align: bottom;
+	  width: 520px;
+
+.vmiddle {
+  vertical-align: middle;
+}
+
+}
+.pb30 {
+	padding-bottom: 30px;
+}
+
+.objectiveTable {
+	margin-bottom: 20px;
+}
+
+.objectiveTable select {
+	margin-top: 10px;
+	margin-right: 10px;
+	margin-left: 0;
+}
+/* /add quiz page */
+
+.error {
+	color: #ff0000;
+}
+ 
+.errorblock {
+	color: #000;
+	background-color: #ffEEEE;
+	border: 3px solid #ff0000;
+	padding: 8px;
+	margin: 16px;
+}
+
+.entryTypeTable {
+	margin-bottom: 20px;
+}
+
+.entryTypeTable select {
+	margin-top: 10px;
+	margin-right: 10px;
+	margin-left: 0;
+}
+.entryTypeTable tr td {
+	vertical-align: middle;
+}
+
+.freeResponse td {
+  padding-top: 10px;
+}
+
+.goal td {
+  padding-top: 10px;
+}
+
+.goalInput {
+  width: 260px;
+}
+
+.goalTarget {
+  width: 70px;
+}
+
+.goalLabel {
+  display: inline-block;
+  width: 170px;
+  font-weight: bold;
+}
+
+.proofReadLabel {
+  display: inline-block;
+  width: 150px;
+  font-weight: bold;
+}

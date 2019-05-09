@@ -1,0 +1,307 @@
+﻿using System;
+using System.IO;
+using System.Runtime.InteropServices;
+using ClearSlideLibrary.Dom;
+using Microsoft.Office.Interop.PowerPoint;
+using Microsoft.Office.Core;
+
+namespace ClearSlideLibrary.PPTBuilder
+{
+
+    public class PPTBackgroundBuilderInterop
+    {
+        public string ExportDir { get; set; }
+        public Application PpApp { get; set; }
+        public Presentation PpPres { get; set; }
+        private string _fileName;
+        private const int SLIDE_NUMBER = 1;
+
+        public PPTBackgroundBuilderInterop(string pathToPpPres)
+        {
+            try
+            {
+                PpApp = new Application();
+                PpPres = PpApp.Presentations.Open(pathToPpPres, MsoTriState.msoTrue, MsoTriState.msoFalse,
+                                                  MsoTriState.msoFalse);
+                string fileFromPath = Path.GetFileName(pathToPpPres);
+                FileInfo inf = new FileInfo(fileFromPath);
+                _fileName = Path.GetFileNameWithoutExtension(inf.Name);
+            }
+            catch (Exception ex)
+            {
+                throw new FileNotFoundException(
+                    "ImageParserOfficeInterop.Ctor Unable to open Power Point Presentation.Path - "
+                    + pathToPpPres, ex.InnerException);
+            }
+        }
+
+        ~PPTBackgroundBuilderInterop()
+        {
+            try
+            {
+                PpPres.Close();
+
+
+                Marshal.ReleaseComObject(PpPres);
+                Marshal.FinalReleaseComObject(PpPres);
+
+                PpPres = null;
+                GC.Collect();
+
+                PpApp.Quit();
+                Marshal.ReleaseComObject(PpApp);
+                Marshal.FinalReleaseComObject(PpApp);
+
+                PpApp = null;
+                GC.Collect();
+            }
+            catch (InvalidComObjectException ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
+
+        public void ExportPresentationImages(string exportDir)
+        {
+            if (PpPres != null)
+            {
+                int slideCounter = 0;
+                this.ExportDir = exportDir;
+
+                GenerateShapesBackground(ref slideCounter);
+                GenerateSlideBackground();
+            }
+            else
+            {
+                throw new ArgumentNullException(
+                    "ImageParserOfficeInterop.ExportPpAppImages() - no PP presentation available");
+            }
+        }
+
+        private void GenerateShapesBackground(ref int slideCounter)
+        {
+            string fileAddress;
+
+            string imageShapeMappingAddress = Path.Combine(this.ExportDir, Globals.IMAGE_TO_SHAPE_MAPPING_FILE);
+            if (File.Exists(imageShapeMappingAddress))
+            {
+                File.Delete(imageShapeMappingAddress);
+            }
+
+            for (int slideIndex = 1; slideIndex <= PpPres.Slides.Count; slideIndex++)
+            {
+                Slide slide = PpPres.Slides[slideIndex];
+                int slide_id = slide.SlideID;
+
+                string name = AddSuffixToPathName(slideIndex);
+
+                string path = CreateDirForImages(name, this.ExportDir);
+                string newExportDir = Path.Combine(this.ExportDir, path);
+
+                for (int shapeIndex = 1; shapeIndex <= slide.Shapes.Count; shapeIndex++)
+                {
+                    Microsoft.Office.Interop.PowerPoint.Shape shape = slide.Shapes[shapeIndex];
+                    fileAddress = string.Concat(newExportDir, "\\s", SLIDE_NUMBER, "s", shape.Id);
+                   // Console.WriteLine("Shape id is:"+shape.Id);
+
+                    ExportShapeByType(fileAddress, shape, slideIndex);
+                }
+
+                Marshal.ReleaseComObject(slide);
+                Marshal.FinalReleaseComObject(slide);
+            }
+        }
+
+        private string AddSuffixToPathName(int slideIndex)
+        {
+            string name;
+            if (PpPres.Slides.Count != 1)
+            {
+                name = _fileName + slideIndex;//add suffix
+            }
+            else
+            {
+                name = _fileName;//don't add suffix we have only one slide.
+            }
+            return name;
+        }
+
+        private string CreateDirForImages(string filename, string destDir)
+        {
+            string path = Path.Combine(destDir, filename);
+            try
+            {
+                if (!Directory.Exists(path))
+                {
+                    Directory.CreateDirectory(path);
+                }
+                else
+                {
+                    DirectoryInfo dirInfo = new DirectoryInfo(path);
+                    foreach (FileInfo fi in dirInfo.GetFiles())
+                    {
+                        fi.Delete();
+                    }
+                    Directory.Delete(path);
+                    Directory.CreateDirectory(path);
+                     
+                }
+            }
+            catch (IOException iex)
+            {
+                Console.WriteLine(iex.Message);
+            }
+            return path;
+        }
+
+        private void GenerateSlideBackground()
+        {
+            int slideCounter = 0;
+
+            for (int slideIndex = 1; slideIndex <= PpPres.Slides.Count; slideIndex++)
+            {
+                Slide slide = PpPres.Slides[slideIndex];
+                int height;
+                int width;
+
+                try
+                {
+                    height = Int32.Parse(PpPres.SlideMaster.Height.ToString());
+                    width = Int32.Parse(PpPres.SlideMaster.Width.ToString());
+                }
+                catch (Exception ex)
+                {
+                    height = 0;
+                    width = 0;
+                    //TODO
+                }
+
+                slideCounter++;
+                string fileAddress;
+                string name = AddSuffixToPathName(slideIndex);
+                string newExportDir = Path.Combine(this.ExportDir, name);
+                fileAddress = string.Concat(newExportDir, "\\sb", SLIDE_NUMBER, ".jpeg");
+                try
+                {
+                    RemoveAllShapes(slide.Shapes);
+                    slide.Export(fileAddress, "jpg", width, height);
+                    //InsertShapeMapping(fileAddress, slideIndex, slideIndex);
+                }
+                catch (Exception ex)
+                {
+                    //TODO
+                }
+            }
+        }
+
+        private void ExportShapeByType(string fileAddress, Microsoft.Office.Interop.PowerPoint.Shape shape,
+                                       int slideIndex)
+        {
+            //Console.WriteLine("The hape type is:"+shape.Type);
+          
+                switch (shape.Type)
+                {
+                    case Microsoft.Office.Core.MsoShapeType.msoPicture:
+                        try
+                        {
+                            ExportPicture(fileAddress, shape, slideIndex);
+                        }
+                        catch (System.Reflection.TargetInvocationException ex)
+                        {
+                            Console.WriteLine(ex.Message);
+                        }
+                        break;
+                    case Microsoft.Office.Core.MsoShapeType.msoSmartArt:
+                        // SmartArt s smartArt = (SmartArt)shape;
+
+                        break;
+                    default:
+                        if (shape.HasTextFrame == MsoTriState.msoTrue)
+                        {
+                            if (!PPTShape.effectShapes.Contains(slideIndex + "_" + shape.Id))
+                            {
+                                shape.TextFrame.DeleteText();
+                            }
+                        }
+                        object[] x = new object[]
+                    {
+                           fileAddress + ".png", PpShapeFormat.ppShapeFormatPNG, 0, 0, PpExportMode.ppScaleXY
+                    };
+
+                        try
+                        {
+                            shape.GetType().InvokeMember("Export", System.Reflection.BindingFlags.InvokeMethod, null, shape, x);
+                            //InsertShapeMapping(fileAddress + ".png", shape.Id, slideIndex);
+                        }
+                        catch (System.Reflection.TargetInvocationException ex)
+                        {
+                            Console.WriteLine(ex.Message);
+                        }
+                        break;
+                }
+        
+        }
+
+        private void InsertShapeMapping(string backgroundImagePath, int shapeId, int slideIndex)
+        {
+            string mapping_file = Path.Combine(this.ExportDir, Globals.IMAGE_TO_SHAPE_MAPPING_FILE);
+            using (StreamWriter writer = new StreamWriter(mapping_file, true))
+            {
+                writer.WriteLine(slideIndex + "|" + shapeId + "|" + backgroundImagePath + "|");
+                writer.Flush();
+            }
+        }
+
+        private void RemoveAllShapes(Microsoft.Office.Interop.PowerPoint.Shapes shapes)
+        {
+            if (shapes.Count > 0)
+            {
+                shapes[1].Delete();
+                RemoveAllShapes(shapes);
+            }
+        }
+
+        private void ExportPicture(string fileaddress, Microsoft.Office.Interop.PowerPoint.Shape shape, int slideIndex)
+        {
+            string extension = Path.GetExtension(shape.AlternativeText);
+            object[] x;
+            switch (extension.ToUpper())
+            {
+                case ".JPG":
+
+                    x = new object[] { fileaddress + ".jpg", PpShapeFormat.ppShapeFormatJPG, 0, 0, PpExportMode.ppScaleXY };
+                    shape.GetType().InvokeMember("Export", System.Reflection.BindingFlags.InvokeMethod, null, shape, x);
+                    //InsertShapeMapping(fileaddress + ".png", shape.Id, slideIndex);
+                    break;
+
+                case ".GIF":
+
+                    x = new object[] { fileaddress + ".gif", PpShapeFormat.ppShapeFormatGIF, 0, 0, PpExportMode.ppScaleXY };
+                    shape.GetType().InvokeMember("Export", System.Reflection.BindingFlags.InvokeMethod, null, shape, x);
+                    //InsertShapeMapping(fileaddress + ".gif", shape.Id, slideIndex);
+                    break;
+
+                case ".PNG":
+
+                    x = new object[] { fileaddress + ".png", PpShapeFormat.ppShapeFormatPNG, 0, 0, PpExportMode.ppScaleXY };
+                    shape.GetType().InvokeMember("Export", System.Reflection.BindingFlags.InvokeMethod, null, shape, x);
+                    //InsertShapeMapping(fileaddress + ".png", shape.Id, slideIndex);
+                    break;
+
+                case ".BMP":
+
+                    x = new object[] { fileaddress + ".bmp", PpShapeFormat.ppShapeFormatPNG, 0, 0, PpExportMode.ppScaleXY };
+                    shape.GetType().InvokeMember("Export", System.Reflection.BindingFlags.InvokeMethod, null, shape, x);
+                    //InsertShapeMapping(fileaddress + ".png", shape.Id, slideIndex);
+                    break;
+
+                default:
+                    x = new object[] { fileaddress + ".png", PpShapeFormat.ppShapeFormatPNG, 0, 0, PpExportMode.ppScaleXY };
+                    shape.GetType().InvokeMember("Export", System.Reflection.BindingFlags.InvokeMethod, null, shape, x);
+                //InsertShapeMapping(fileaddress + ".png", shape.Id, slideIndex);
+
+                    break;
+            }
+        }
+    }
+}

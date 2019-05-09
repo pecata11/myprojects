@@ -1,0 +1,17 @@
+﻿using System.Collections.Generic;
+
+namespace ClearSlideLibrary.Dom
+{
+    public class PPTContainerShape
+    {
+        public List<PPTShape> Shapes { get; set; }
+        public List<PPTImage> Images { get; set; }
+        public List<PPTGraphicFrame> GraphicFrames { get; set; }
+        public List<PPTGroupShape> GroupShapes { get; set; }
+        public List<PPTConnectionShape> ConnectionShapes { get; set; }
+        public PPTContainerShape()
+        {
+        }
+
+    }
+}

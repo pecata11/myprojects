@@ -1,0 +1,4 @@
+\\vmware-host\Shared Folders\Desktop\ProjectPPTX2HTML\ClearSlideLibrary\bin\Release\ClearSlideLibrary.dll
+\\vmware-host\Shared Folders\Desktop\ProjectPPTX2HTML\ClearSlideLibrary\bin\Release\ClearSlideLibrary.pdb
+\\vmware-host\Shared Folders\Desktop\ProjectPPTX2HTML\ClearSlideLibrary\obj\Release\ClearSlideLibrary.dll
+\\vmware-host\Shared Folders\Desktop\ProjectPPTX2HTML\ClearSlideLibrary\obj\Release\ClearSlideLibrary.pdb

@@ -1,0 +1,569 @@
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/davia/!svn/ver/546/trunk/mobile/iOS/BirthdayCalendar/Classes
+END
+NSDate+Helper.h
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/davia/!svn/ver/497/trunk/mobile/iOS/BirthdayCalendar/Classes/NSDate+Helper.h
+END
+DataModelManager.m
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/davia/!svn/ver/841/trunk/mobile/iOS/BirthdayCalendar/Classes/DataModelManager.m
+END
+InAppPurchaseManager.h
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/davia/!svn/ver/872/trunk/mobile/iOS/BirthdayCalendar/Classes/InAppPurchaseManager.h
+END
+NSDate+Helper.m
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/davia/!svn/ver/497/trunk/mobile/iOS/BirthdayCalendar/Classes/NSDate+Helper.m
+END
+InAppPurchaseManager.m
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/davia/!svn/ver/872/trunk/mobile/iOS/BirthdayCalendar/Classes/InAppPurchaseManager.m
+END
+KeepBirthPrivateCell.xib
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/davia/!svn/ver/843/trunk/mobile/iOS/BirthdayCalendar/Classes/KeepBirthPrivateCell.xib
+END
+uicheckbox_unchecked@2x.png
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svn/davia/!svn/ver/815/trunk/mobile/iOS/BirthdayCalendar/Classes/uicheckbox_unchecked@2x.png
+END
+FacebookManager.h
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/davia/!svn/ver/794/trunk/mobile/iOS/BirthdayCalendar/Classes/FacebookManager.h
+END
+ContactInfo.h
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/davia/!svn/ver/674/trunk/mobile/iOS/BirthdayCalendar/Classes/ContactInfo.h
+END
+FacebookManager.m
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/davia/!svn/ver/824/trunk/mobile/iOS/BirthdayCalendar/Classes/FacebookManager.m
+END
+CreateAccountViewController.xib
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/svn/davia/!svn/ver/853/trunk/mobile/iOS/BirthdayCalendar/Classes/CreateAccountViewController.xib
+END
+CalendarTableViewCell.h
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/davia/!svn/ver/829/trunk/mobile/iOS/BirthdayCalendar/Classes/CalendarTableViewCell.h
+END
+ContactInfo.m
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/davia/!svn/ver/674/trunk/mobile/iOS/BirthdayCalendar/Classes/ContactInfo.m
+END
+ManageBirthdayViewController.h
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/davia/!svn/ver/816/trunk/mobile/iOS/BirthdayCalendar/Classes/ManageBirthdayViewController.h
+END
+CreateAccountViewController.h
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svn/davia/!svn/ver/870/trunk/mobile/iOS/BirthdayCalendar/Classes/CreateAccountViewController.h
+END
+UpcomingViewController.h
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/davia/!svn/ver/829/trunk/mobile/iOS/BirthdayCalendar/Classes/UpcomingViewController.h
+END
+CalendarTableViewCell.m
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/davia/!svn/ver/829/trunk/mobile/iOS/BirthdayCalendar/Classes/CalendarTableViewCell.m
+END
+ManageBirthdayViewController.m
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/davia/!svn/ver/881/trunk/mobile/iOS/BirthdayCalendar/Classes/ManageBirthdayViewController.m
+END
+CreateAccountViewController.m
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svn/davia/!svn/ver/870/trunk/mobile/iOS/BirthdayCalendar/Classes/CreateAccountViewController.m
+END
+AlertsViewController.xib
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/davia/!svn/ver/304/trunk/mobile/iOS/BirthdayCalendar/Classes/AlertsViewController.xib
+END
+UpcomingViewController.m
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/davia/!svn/ver/913/trunk/mobile/iOS/BirthdayCalendar/Classes/UpcomingViewController.m
+END
+PostToWallSMSViewController.xib
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/svn/davia/!svn/ver/890/trunk/mobile/iOS/BirthdayCalendar/Classes/PostToWallSMSViewController.xib
+END
+AlertsViewController.h
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/davia/!svn/ver/822/trunk/mobile/iOS/BirthdayCalendar/Classes/AlertsViewController.h
+END
+SettingsViewController.xib
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svn/davia/!svn/ver/899/trunk/mobile/iOS/BirthdayCalendar/Classes/SettingsViewController.xib
+END
+BirthdayCoreDataSource.h
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/davia/!svn/ver/48/trunk/mobile/iOS/BirthdayCalendar/Classes/BirthdayCoreDataSource.h
+END
+EmailTableCell.xib
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/davia/!svn/ver/843/trunk/mobile/iOS/BirthdayCalendar/Classes/EmailTableCell.xib
+END
+uicheckbox_unchecked.png
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/davia/!svn/ver/815/trunk/mobile/iOS/BirthdayCalendar/Classes/uicheckbox_unchecked.png
+END
+UINavigationBar+UINavigationBarCategory.h
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/svn/davia/!svn/ver/21/trunk/mobile/iOS/BirthdayCalendar/Classes/UINavigationBar+UINavigationBarCategory.h
+END
+AlertsViewController.m
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/davia/!svn/ver/823/trunk/mobile/iOS/BirthdayCalendar/Classes/AlertsViewController.m
+END
+EmailTableCell.h
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/davia/!svn/ver/803/trunk/mobile/iOS/BirthdayCalendar/Classes/EmailTableCell.h
+END
+SettingsViewController.h
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/davia/!svn/ver/872/trunk/mobile/iOS/BirthdayCalendar/Classes/SettingsViewController.h
+END
+BirthdayCoreDataSource.m
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/davia/!svn/ver/881/trunk/mobile/iOS/BirthdayCalendar/Classes/BirthdayCoreDataSource.m
+END
+ForgotPinViewController.xib
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svn/davia/!svn/ver/888/trunk/mobile/iOS/BirthdayCalendar/Classes/ForgotPinViewController.xib
+END
+LoginViewController.xib
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/davia/!svn/ver/865/trunk/mobile/iOS/BirthdayCalendar/Classes/LoginViewController.xib
+END
+UINavigationBar+UINavigationBarCategory.m
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/svn/davia/!svn/ver/21/trunk/mobile/iOS/BirthdayCalendar/Classes/UINavigationBar+UINavigationBarCategory.m
+END
+SettingsViewController.m
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/davia/!svn/ver/897/trunk/mobile/iOS/BirthdayCalendar/Classes/SettingsViewController.m
+END
+EmailTableCell.m
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/davia/!svn/ver/803/trunk/mobile/iOS/BirthdayCalendar/Classes/EmailTableCell.m
+END
+Birthday.h
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/davia/!svn/ver/841/trunk/mobile/iOS/BirthdayCalendar/Classes/Birthday.h
+END
+LoginViewController.h
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/davia/!svn/ver/864/trunk/mobile/iOS/BirthdayCalendar/Classes/LoginViewController.h
+END
+UserData.h
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/davia/!svn/ver/590/trunk/mobile/iOS/BirthdayCalendar/Classes/UserData.h
+END
+ContactsViewController.xib
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svn/davia/!svn/ver/381/trunk/mobile/iOS/BirthdayCalendar/Classes/ContactsViewController.xib
+END
+Birthday.m
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/davia/!svn/ver/841/trunk/mobile/iOS/BirthdayCalendar/Classes/Birthday.m
+END
+Constants.h
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/davia/!svn/ver/779/trunk/mobile/iOS/BirthdayCalendar/Classes/Constants.h
+END
+LoginViewController.m
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/davia/!svn/ver/869/trunk/mobile/iOS/BirthdayCalendar/Classes/LoginViewController.m
+END
+ContactsViewController.h
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/davia/!svn/ver/816/trunk/mobile/iOS/BirthdayCalendar/Classes/ContactsViewController.h
+END
+UserData.m
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/davia/!svn/ver/170/trunk/mobile/iOS/BirthdayCalendar/Classes/UserData.m
+END
+BirthdayTableCell.h
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/davia/!svn/ver/807/trunk/mobile/iOS/BirthdayCalendar/Classes/BirthdayTableCell.h
+END
+ContactsViewController.m
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/davia/!svn/ver/887/trunk/mobile/iOS/BirthdayCalendar/Classes/ContactsViewController.m
+END
+CalendarBirthdaysViewController.h
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svn/davia/!svn/ver/841/trunk/mobile/iOS/BirthdayCalendar/Classes/CalendarBirthdaysViewController.h
+END
+BirthdayTableCell.m
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/davia/!svn/ver/805/trunk/mobile/iOS/BirthdayCalendar/Classes/BirthdayTableCell.m
+END
+UICheckbox.h
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/davia/!svn/ver/805/trunk/mobile/iOS/BirthdayCalendar/Classes/UICheckbox.h
+END
+CalendarBirthdaysViewController.m
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svn/davia/!svn/ver/913/trunk/mobile/iOS/BirthdayCalendar/Classes/CalendarBirthdaysViewController.m
+END
+UICheckbox.m
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/davia/!svn/ver/805/trunk/mobile/iOS/BirthdayCalendar/Classes/UICheckbox.m
+END
+Reachability.h
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/davia/!svn/ver/841/trunk/mobile/iOS/BirthdayCalendar/Classes/Reachability.h
+END
+uicheckbox_checked@2x.png
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/davia/!svn/ver/815/trunk/mobile/iOS/BirthdayCalendar/Classes/uicheckbox_checked@2x.png
+END
+Reachability.m
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/davia/!svn/ver/841/trunk/mobile/iOS/BirthdayCalendar/Classes/Reachability.m
+END
+EditBirthdayViewController.xib
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/davia/!svn/ver/186/trunk/mobile/iOS/BirthdayCalendar/Classes/EditBirthdayViewController.xib
+END
+CalendarTableViewCell.xib
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/davia/!svn/ver/829/trunk/mobile/iOS/BirthdayCalendar/Classes/CalendarTableViewCell.xib
+END
+ContactsData.h
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/davia/!svn/ver/216/trunk/mobile/iOS/BirthdayCalendar/Classes/ContactsData.h
+END
+KeepBirthPrivateCell.h
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/davia/!svn/ver/805/trunk/mobile/iOS/BirthdayCalendar/Classes/KeepBirthPrivateCell.h
+END
+ManageBirthdayViewController.xib
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/svn/davia/!svn/ver/825/trunk/mobile/iOS/BirthdayCalendar/Classes/ManageBirthdayViewController.xib
+END
+EditBirthdayViewController.h
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/davia/!svn/ver/841/trunk/mobile/iOS/BirthdayCalendar/Classes/EditBirthdayViewController.h
+END
+UpcomingViewController.xib
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svn/davia/!svn/ver/783/trunk/mobile/iOS/BirthdayCalendar/Classes/UpcomingViewController.xib
+END
+KeepBirthPrivateCell.m
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/davia/!svn/ver/805/trunk/mobile/iOS/BirthdayCalendar/Classes/KeepBirthPrivateCell.m
+END
+ContactsData.m
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/davia/!svn/ver/216/trunk/mobile/iOS/BirthdayCalendar/Classes/ContactsData.m
+END
+EditBirthdayViewController.m
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/davia/!svn/ver/841/trunk/mobile/iOS/BirthdayCalendar/Classes/EditBirthdayViewController.m
+END
+UIAlertView+property.h
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/davia/!svn/ver/442/trunk/mobile/iOS/BirthdayCalendar/Classes/UIAlertView+property.h
+END
+MBProgressHUD.h
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/davia/!svn/ver/66/trunk/mobile/iOS/BirthdayCalendar/Classes/MBProgressHUD.h
+END
+PinTableViewCell.xib
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/davia/!svn/ver/843/trunk/mobile/iOS/BirthdayCalendar/Classes/PinTableViewCell.xib
+END
+UIAlertView+property.m
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/davia/!svn/ver/442/trunk/mobile/iOS/BirthdayCalendar/Classes/UIAlertView+property.m
+END
+HolidayAppDelegate.h
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/davia/!svn/ver/867/trunk/mobile/iOS/BirthdayCalendar/Classes/HolidayAppDelegate.h
+END
+MBProgressHUD.m
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/davia/!svn/ver/66/trunk/mobile/iOS/BirthdayCalendar/Classes/MBProgressHUD.m
+END
+PinTableViewCell.h
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/davia/!svn/ver/805/trunk/mobile/iOS/BirthdayCalendar/Classes/PinTableViewCell.h
+END
+HolidayAppDelegate.m
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/davia/!svn/ver/913/trunk/mobile/iOS/BirthdayCalendar/Classes/HolidayAppDelegate.m
+END
+PostToWallSMSViewController.h
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svn/davia/!svn/ver/888/trunk/mobile/iOS/BirthdayCalendar/Classes/PostToWallSMSViewController.h
+END
+PinTableViewCell.m
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/davia/!svn/ver/805/trunk/mobile/iOS/BirthdayCalendar/Classes/PinTableViewCell.m
+END
+PostToWallSMSViewController.m
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svn/davia/!svn/ver/888/trunk/mobile/iOS/BirthdayCalendar/Classes/PostToWallSMSViewController.m
+END
+Utils.h
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/davia/!svn/ver/880/trunk/mobile/iOS/BirthdayCalendar/Classes/Utils.h
+END
+GenderTableViewCell.xib
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/davia/!svn/ver/843/trunk/mobile/iOS/BirthdayCalendar/Classes/GenderTableViewCell.xib
+END
+Utils.m
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/davia/!svn/ver/880/trunk/mobile/iOS/BirthdayCalendar/Classes/Utils.m
+END
+ForgotPinViewController.h
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/davia/!svn/ver/864/trunk/mobile/iOS/BirthdayCalendar/Classes/ForgotPinViewController.h
+END
+Facebook+Singleton.h
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/Classes/Facebook+Singleton.h
+END
+GenderTableViewCell.h
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/davia/!svn/ver/805/trunk/mobile/iOS/BirthdayCalendar/Classes/GenderTableViewCell.h
+END
+BirthdayTableCell.xib
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/davia/!svn/ver/843/trunk/mobile/iOS/BirthdayCalendar/Classes/BirthdayTableCell.xib
+END
+ForgotPinViewController.m
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/davia/!svn/ver/873/trunk/mobile/iOS/BirthdayCalendar/Classes/ForgotPinViewController.m
+END
+Facebook+Singleton.m
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/davia/!svn/ver/501/trunk/mobile/iOS/BirthdayCalendar/Classes/Facebook+Singleton.m
+END
+GenderTableViewCell.m
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/davia/!svn/ver/805/trunk/mobile/iOS/BirthdayCalendar/Classes/GenderTableViewCell.m
+END
+CalendarBirthdaysViewController.xib
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/svn/davia/!svn/ver/430/trunk/mobile/iOS/BirthdayCalendar/Classes/CalendarBirthdaysViewController.xib
+END
+MainViewController.xib
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/davia/!svn/ver/435/trunk/mobile/iOS/BirthdayCalendar/Classes/MainViewController.xib
+END
+MainViewController.h
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/davia/!svn/ver/816/trunk/mobile/iOS/BirthdayCalendar/Classes/MainViewController.h
+END
+DataModelManager.h
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/davia/!svn/ver/841/trunk/mobile/iOS/BirthdayCalendar/Classes/DataModelManager.h
+END
+Debug.h
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/davia/!svn/ver/369/trunk/mobile/iOS/BirthdayCalendar/Classes/Debug.h
+END
+uicheckbox_checked.png
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/davia/!svn/ver/815/trunk/mobile/iOS/BirthdayCalendar/Classes/uicheckbox_checked.png
+END
+MainViewController.m
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/davia/!svn/ver/897/trunk/mobile/iOS/BirthdayCalendar/Classes/MainViewController.m
+END

@@ -1,0 +1,830 @@
+﻿function GetCurrentXYSlide(a) {
+	var b = gv.sw;
+	var c = gv.sh;
+	var d = parseInt(a.sV.d.style.left);
+	var e = parseInt(a.sV.d.style.top);
+	var f = a.sV.w;
+	var g = a.sV.h;
+	switch (a.c.additionalData) {
+	case 1:
+		a.dX = d;
+		a.dY = g * -1;
+		break;
+	case 2:
+		a.dX = b;
+		a.dY = e;
+		break;
+	case 3:
+		a.dX = d;
+		a.dY = c;
+		break;
+	case 4:
+		a.dX = f * -1;
+		a.dY = e;
+		break;
+	case 6:
+		a.dX = f * -1;
+		a.dY = g * -1;
+		break;
+	case 7:
+		a.dX = b;
+		a.dY = g * -1;
+		break;
+	case 8:
+		a.dX = b;
+		a.dY = c;
+		break;
+	case 9:
+		a.dX = f * -1;
+		a.dY = c;
+		break
+	}
+	a.fX = d;
+	a.fY = e;
+	if (a.c.state == 2) {
+		var h = a.fY;
+		a.fY = a.dY;
+		a.dY = h;
+		h = a.fX;
+		a.fX = a.dX;
+		a.dX = h
+	}
+}
+function todec(a) {
+	return Math.min(255, Math.round(a * 256))
+}
+function hsv2color(a, b, c) {
+	var d;
+	var e;
+	var f;
+	var g;
+	var h = Math.floor(a / 60 % 6);
+	var i = a / 60 - h;
+	var j = c * (1 - b);
+	var k = c * (1 - i * b);
+	var l = c * (1 - (1 - i) * b);
+	switch (h) {
+	case 0: {
+			d = c;
+			e = l;
+			f = j;
+			break
+		};
+	case 1: {
+			d = k;
+			e = c;
+			f = j;
+			break
+		};
+	case 2: {
+			d = j;
+			e = c;
+			f = l;
+			break
+		};
+	case 3: {
+			d = j;
+			e = k;
+			f = c;
+			break
+		};
+	case 4: {
+			d = l;
+			e = j;
+			f = c;
+			break
+		};
+	case 5: {
+			d = c;
+			e = j;
+			f = k;
+			break
+		}
+	}
+	d = todec(d);
+	e = todec(e);
+	f = todec(f);
+	return [d, e, f]
+}
+function rgb2hsv(a) {
+	r = a[0] / 255;
+	g = a[1] / 255;
+	b = a[2] / 255;
+	var c;
+	var d;
+	var e;
+	var f;
+	var h = Math.min(Math.min(r, g), b);
+	var i = Math.max(Math.max(r, g), b);
+	c = i - h;
+	switch (i) {
+	case h: {
+			d = 0;
+			break
+		};
+	case r: {
+			d = 60 * (g - b) / c;
+			if (g < b) {
+				d = d + 360
+			}
+			break
+		};
+	case g: {
+			d = 60 * (b - r) / c + 120;
+			break
+		};
+	case b: {
+			d = 60 * (r - g) / c + 240;
+			break
+		}
+	}
+	e = i === 0 ? 0 : 1 - h / i;
+	var j = [Math.round(d), e, i];
+	return j
+}
+function tranend(a) {
+	pause();
+	if (a != 1) {
+		gStartTime = gStartTime - (gslength[gc - 1] + animations["s" + gc].t.i - gt);
+		play();
+		return
+	}
+	gx = 0;
+	if (gpc != gc)
+		gco("s" + gpc + "s0").style.display = "none";
+	if (gpc > gc) {
+		gco("s" + gpc + "s0").style.zIndex = "0"
+	}
+	gpc = 0;
+	var b = gt - (gslength[gc - 1] + animations["s" + gc].t.i);
+	gtct = gtct - b;
+	if (animations["s" + gc].f == gslength[gc - 1]) {
+		animations["s" + gc].f = gslength[gc - 1] + animations["s" + gc].t.i;
+		gt = animations["s" + gc].f
+	} else {
+		gStartTime = gStartTime - (animations["s" + gc].f - (gslength[gc - 1] + animations["s" + gc].t.i));
+		gt = animations["s" + gc].f
+	}
+	setProgress();
+	if (animations["s" + gc].f == gslength[gc - 1] + animations["s" + gc].t.i) {
+		if (animations["s" + gc].t.n == 1 && animations["s" + gc].g == 0) {
+			playCurrentAniamtion();
+			play()
+		}
+	} else if (galength.indexOf(animations["s" + gc].f) == -1 && animations["s" + gc].f != gslength[gc]) {
+		playCurrentAniamtion();
+		play()
+	}
+}
+function gad(a) {
+	clearTimeout(aatoid);
+	a.v = new autoAdvance(a)
+}
+function video(a, b, c) {
+	if (gv.v == 0)
+		return;
+	var d = a.getElementsByTagName("video")[0];
+	if (d.paused) {
+		d.play();
+		checkForAudioVideoObject(d, 1)
+	} else {
+		d.currentTime = 0;
+		d.pause()
+	}
+}
+function audio(a) {
+	var b = a.getElementsByTagName("audio")[0];
+	if (gv.v == 0 || typeof b.play == "undefined")
+		return;
+	if (b.paused) {
+		b.play();
+		checkForAudioVideoObject(b, 1)
+	} else {
+		b.pause();
+		b.currentTime = 0
+	}
+}
+var caS = document.createElement("audio");
+StylePpty = function () {};
+StylePpty.Transform = function () {
+	if (typeof this.transform == "undefined") {
+		this.transform = "transform";
+		var a = ["transform", "WebkitTransform", "msTransform", "MozTransform", "OTransform"];
+		var b;
+		var c = document.getElementsByTagName("div");
+		while (b = a.shift()) {
+			if (typeof c[0].style[b] != "undefined") {
+				this.transform = b;
+				return this.transform
+			}
+		}
+	}
+	return this.transform
+};
+var DOPStyle = new function () {
+	if (typeof window.getComputedStyle == "undefined") {
+		this.s = function (a, b) {
+			if (typeof a.tagName != "undefined")
+				return a.currentStyle[b]
+		}
+	} else {
+		this.s = function (a, b) {
+			if (typeof a.tagName != "undefined")
+				return document.defaultView.getComputedStyle(a, null)[b]
+		}
+	}
+};
+ClntH = function (a) {
+	var b = a.childNodes;
+	var c = -1;
+	var d = -1;
+	var e = {
+		h : 0,
+		w : 0
+	};
+	for (var f = 0; f < b.length; f++) {
+		var g = b[f];
+		if (g.nodeType == 1 && g.nodeName == "PRE") {
+			if (g.style.left != d) {
+				e.w += parseFloat(g.scrollWidth);
+				d = g.style.left
+			}
+			if (g.style.top != c) {
+				e.h += parseFloat(g.scrollHeight);
+				c = g.style.top
+			}
+		}
+	}
+	return e
+};
+InItD = function (a) {
+	this.p = a;
+	if (this.p.c.e0 != 5) {
+		this.d = document.getElementById(gci(this.p.c.objectId, gc));
+		this.dpd = document.getElementById(gci(this.p.c.objectId, gc) + "c")
+	} else {
+		this.d = document.getElementById(this.p.c.objectId);
+		this.dpd = document.getElementById(this.p.c.objectId + "c")
+	}
+	if (this.dpd == null)
+		this.dpd = this.d;
+	this.h = this.d.style.height ? parseFloat(this.d.style.height) : this.d.parentNode.style.height ? parseFloat(this.d.parentNode.style.height) : parseFloat(this.d.scrollHeight);
+	this.w = this.d.style.width ? parseFloat(this.d.style.width) : this.d.parentNode.style.width ? parseFloat(this.d.parentNode.style.width) : parseFloat(this.d.scrollWidth);
+	if (this.h == 0 || this.w == 0) {
+		var b = ClntH(this.dpd);
+		this.h = b.h;
+		this.w = b.w
+	}
+	this.l = this.d.style.left ? parseFloat(this.d.style.left) : parseFloat(this.d.parentNode.style.left);
+	this.t = this.d.style.top ? parseFloat(this.d.style.top) : parseFloat(this.d.parentNode.style.top);
+	this.op = parseFloat(DOPStyle.s(this.dpd, "opacity"));
+	this.st = gt;
+	this.setTrasform = function () {
+		this.trns = this.p.getTranslate();
+		this.scl = this.p.getScale();
+		this.rta = this.p.getRotate();
+		this.skw = this.p.getSkewX()
+	};
+	this.reset = function () {
+		this.d.style.height = this.h + "px";
+		this.d.style.width = this.w + "px";
+		this.d.style.left = this.l + "px";
+		this.d.style.top = this.t + "px";
+		this.dpd.style.opacity = this.op;
+		this.p.setTranslate(this.trns.x, this.trns.y);
+		this.p.setScale(this.scl.x, this.scl.y);
+		this.p.setRotate(this.rta);
+		this.p.setSkewX(this.skw)
+	}
+};
+Banim = function (c) {
+	this.c = c;
+	this.blks = new Array;
+	this.gtime = function () {
+		var a = gt;
+		if (this.c.repetitions < 0 && this.rpdCnt > 0)
+			a = (new Date).getTime();
+		return a
+	};
+	this.initBanim = function (a) {
+		if (typeof this.sV != "undefined")
+			return false;
+		this.sV = new InItD(this);
+		this.sV.setTrasform();
+		this.rpdCnt = 0;
+		this.initT = this.st = a;
+		if (typeof this.c.c6 != "undefined")
+			this.aSrc = document.getElementById(this.c.c6).src;
+		this.at = typeof this.c.e1 == "undefined" ? 1 : this.c.e1;
+		this.InitAnimBlocks();
+		return true
+	};
+	this.InitAnimBlocks = function () {
+		if (this.at == 1)
+			return;
+		var p = this;
+		var cBlk = 0;
+		var cPara = 0;
+		var cBlkI = 1;
+		while (1) {
+			var nblkId = p.c.e3[cPara] + "b" + cBlkI;
+			if (null != document.getElementById(nblkId)) {
+				var nBtm = p.c.e0 == 3 ? p.st + p.c.start + p.c.length + p.c.e2 * cBlk : p.st + p.c.e2 * cBlk;
+				var pc = p.c;
+				var nC = {
+					objectId : nblkId,
+					start : pc.start,
+					length : pc.length,
+					repetitions : 0,
+					state: pc.state,
+					name : pc.name,
+					c7 : pc.c7,
+					additionalData: pc.additionalData,
+					additionalData2: pc.additionalData2,
+					scaleX: pc.scaleX,
+					scaleY: pc.scaleY,
+					color: pc.color,
+					transparency: pc.transparency,
+					s6 : pc.s6,
+					v : pc.v0,
+					e0 : 5,
+					e1 : 1,
+					e2 : pc.e2,
+					e3 : 0
+				};
+				if (typeof window[p.c.name] != "undefined")
+					p.blks[cBlk] = eval("new " + p.c.name + "(nC)");
+				else
+					p.blks[cBlk] = new Fade(nC);
+				var blk = p.blks[cBlk];
+				blk.Initialize(nBtm);
+				cBlk++;
+				cBlkI++
+			} else if (cPara + 1 < p.c.e3.length) {
+				cPara++;
+				cBlkI = 1
+			} else
+				break
+		}
+	};
+	this.resetBanim = function () {
+		this.pozd = false;
+		this.stpd = false;
+		for (x in this.blks) {
+			this.blks[x].pozd = false;
+			this.blks[x].stpd = false
+		}
+	};
+	this.pause = function () {
+		this.pozd = true;
+		for (x in this.blks)
+			this.blks[x].pozd = true
+	};
+	this.stop = function () {
+		this.pozd = false;
+		this.stpd = true;
+		for (x in this.blks) {
+			this.blks[x].pozd = false;
+			this.blks[x].stpd = true
+		}
+	};
+	this.reset = function () {
+		this.rpdCnt = 0;
+		this.st = this.initT;
+		this.stop();
+		this.stopCaS();
+		if (typeof this.dltCv != "undefined")
+			this.dltCv();
+		if (typeof this.mc != "undefined")
+			this.mc.cvt.clearRect(0, 0, this.w, this.h);
+		if (typeof this.sV != "undefined")
+			this.sV.reset();
+		for (x in this.blks)
+			this.blks[x].reset()
+	};
+	this.stopCaS = function () {
+		if (this.aSrc == caS.src && caS.canPlayType) {
+			if (!caS.paused)
+				caS.pause();
+			if (!this.pozd)
+				caS.src = null
+		}
+	};
+	this.playCaS = function () {
+		if (!caS.canPlayType || typeof this.aSrc == "undefined" || this.aSrc == caS.src && !caS.paused)
+			return;
+		if (this.aSrc != caS.src)
+			caS.src = this.aSrc;
+		caS.play()
+	};
+	this.doRepeat = function () {
+		this.rpdCnt++;
+		if (this.rpdCnt < this.c.repetitions || this.c.repetitions < 0) {
+			this.st = this.c.repetitions < 0 ? this.gtime() : this.st + this.c.length;
+			this.stopCaS();
+			this.play()
+		}
+	};
+	this.setTranslate = function (a, b) {
+		var c = StylePpty.Transform();
+		var d = this.sV.d.style[c];
+		var e = /translate\(+[^\)]+\)/;
+		var f = "translate(" + a + "px," + b + "px)";
+		if (-1 != d.search(e))
+			d = d.replace(e, f);
+		else if (null != d)
+			d = d + f;
+		this.sV.d.style[c] = d
+	};
+	this.getTranslate = function () {
+		var a = {
+			x : 0,
+			y : 0
+		};
+		var b = StylePpty.Transform();
+		var c = this.sV.d.style[b];
+		var d = /translate\(+[^\)]+\)/;
+		var e = c.match(d);
+		if (null != e) {
+			var f = e[0].match(/[0-9.-]+|[\d]+[^p]/g);
+			a.x = parseFloat(f[0]);
+			a.y = parseFloat(f[1])
+		}
+		return a
+	};
+	this.setScale = function (a, b) {
+		var c = StylePpty.Transform();
+		var d = this.sV.d.style[c];
+		var e = /scale\(+[^\)]+\)/;
+		var f = "scale(" + a + "," + b + ")";
+		if (-1 != d.search(e))
+			d = d.replace(e, f);
+		else if (null != d)
+			d = d + f;
+		this.sV.d.style[c] = d
+	};
+	this.getScale = function () {
+		var a = {
+			x : 1,
+			y : 1
+		};
+		var b = StylePpty.Transform();
+		var c = this.sV.d.style[b];
+		var d = /scale\(+[^\)]+\)/;
+		var e = c.match(d);
+		if (null != e) {
+			var f = e[0].match(/[0-9.-]+|[\d]+[^p]/g);
+			a.x = parseFloat(f[0]);
+			a.y = parseFloat(f[1])
+		}
+		return a
+	};
+	this.setRotate = function (a) {
+		var b = StylePpty.Transform();
+		var c = this.sV.d.style[b];
+		var d = /rotate\(+[^\)]+\)/;
+		var e = "rotate(" + a + "deg)";
+		if (-1 != c.search(d))
+			c = c.replace(d, e);
+		else if (null != c)
+			c = c + e;
+		this.sV.d.style[b] = c
+	};
+	this.getRotate = function () {
+		var a = 0;
+		var b = StylePpty.Transform();
+		var c = this.sV.d.style[b];
+		var d = /rotate\(+[^\)]+\)/;
+		var e = c.match(d);
+		if (null != e) {
+			var f = e[0].match(/[0-9.-]+|[\d]+[^d]/g);
+			a = parseFloat(f[0])
+		}
+		return a
+	};
+	this.setSkewX = function (a) {
+		var b = StylePpty.Transform();
+		var c = this.sV.d.style[b];
+		var d = /skewX\(+[^\)]+\)/;
+		var e = "skewX(" + a + "deg)";
+		if (-1 != c.search(d))
+			c = c.replace(d, e);
+		else if (null != c)
+			c = c + e;
+		this.sV.d.style[b] = c
+	};
+	this.getSkewX = function () {
+		var a = 0;
+		var b = StylePpty.Transform();
+		var c = this.sV.d.style[b];
+		var d = /skewX\(+[^\)]+\)/;
+		var e = c.match(d);
+		if (null != e) {
+			var f = e[0].match(/[0-9.-]+|[\d]+[^d]/g);
+			a = parseFloat(f[0])
+		}
+		return a
+	};
+	this.plyBlockAnim = function () {
+		function c() {
+			if (a.pozd || a.stpd || b >= a.blks.length)
+				return;
+			while (1) {
+				if (b >= a.blks.length)
+					return;
+				var d = a.blks[b];
+				if (d.st <= a.gtime()) {
+					d.play();
+					b++
+				} else
+					break
+			}
+			Cbfun(c)
+		}
+		var a = this;
+		if (a.at == 1)
+			return;
+		var b = 0;
+		Cbfun(c)
+	}
+};
+Cv = function (a, b) {
+	this.cv = document.createElement("canvas");
+	this.cv.height = b;
+	this.cv.width = a;
+	this.cvt = this.cv.getContext("2d");
+	this.bdrawn = false;
+	this.drawCmpltDiv = function (a, b, c) {
+		var d = a.childNodes;
+		var e = d.length;
+		for (var f = 0; f < e; f++) {
+			var g = d[f];
+			if (g.nodeType != 1 || g.nodeName != "IMG")
+				continue;
+			var h = DOPStyle.s(a, "height");
+			var i = DOPStyle.s(a, "width");
+			var j = DOPStyle.s(a.parentNode, "height");
+			var k = DOPStyle.s(a.parentNode, "width");
+			var l = h && h != "100%" ? parseFloat(h) : parseFloat(j);
+			var m = i && i != "100%" ? parseFloat(i) : parseFloat(k);
+			this.cvt.drawImage(g, b, c, m, l)
+		}
+		for (var f = 0; f < e; f++) {
+			var g = d[f];
+			if (g.nodeType != 1 || g.nodeName != "PRE")
+				continue;
+			var n = g.style.left ? b + parseFloat(g.style.left) : b;
+			var o = g.style.top ? c + parseFloat(g.style.top) : c;
+			this.cvt.font = DOPStyle.s(g, "fontStyle") + " " + DOPStyle.s(g, "fontWeight") + " " + DOPStyle.s(g, "fontSize") + " " + DOPStyle.s(g, "fontFamily");
+			this.cvt.fillStyle = DOPStyle.s(g, "color");
+			this.cvt.textBaseline = "top";
+			this.cvt.fillText(g.innerHTML, n, o)
+		}
+		for (var f = 0; f < e; f++) {
+			var g = d[f];
+			var p = DOPStyle.s(g, "opacity");
+			if (g.nodeType != 1 || g.nodeName != "DIV" || p == "0")
+				continue;
+			var q = DOPStyle.s(g, "left");
+			var r = DOPStyle.s(g, "top");
+			var n = q ? b + parseFloat(q) : 0;
+			var o = r ? c + parseFloat(r) : 0;
+			this.drawCmpltDiv(g, n, o)
+		}
+		this.bdrawn = true
+	};
+	this.drawDiv = function (a) {
+		var b = a.getElementsByTagName("img");
+		var c = new Image;
+		var d = this;
+		if (b.length > 0)
+			c.src = b[0].src;
+		else
+			this.drawText(a);
+		c.onload = function () {
+			d.cvt.drawImage(c, 0, 0, c.width, c.height, 0, 0, d.cv.width, d.cv.height);
+			d.drawText(a)
+		}
+	};
+	this.drawText = function (a) {
+		var b = a.getElementsByTagName("pre");
+		var c = b.length;
+		for (var d = 0; d < c; d++) {
+			var e = b[d];
+			this.cvt.font = DOPStyle.s(e, "fontStyle") + " " + DOPStyle.s(e, "fontWeight") + " " + DOPStyle.s(e, "fontSize") + " " + DOPStyle.s(e, "fontFamily");
+			this.cvt.fillStyle = DOPStyle.s(e, "color");
+			this.cvt.textBaseline = "bottom";
+			this.cvt.fillText(e.innerHTML, parseFloat(e.style.left), parseFloat(e.style.top) + e.scrollHeight)
+		}
+		this.bdrawn = true
+	};
+	this.apndTo = function (a) {
+		a.appendChild(this.cv)
+	};
+	this.draw = function (a, b) {
+		if (a.bdrawn) {
+			if (b)
+				this.cvt.clearRect(0, 0, this.cv.width, this.cv.height);
+			this.cvt.drawImage(a.cv, 0, 0)
+		}
+	}
+};
+MskAnim = function (a) {
+	this.inheritFrom = Banim;
+	this.inheritFrom(a);
+	this.initMskAnim = function (a) {
+		if (this.initBanim(a)) {
+			this.h = this.sV.h;
+			this.w = this.sV.w;
+			this.im = new Image;
+			this.bgcv = new Cv(this.w, this.h);
+			this.frcv = new Cv(this.w, this.h);
+			if (this.c.state == -1)
+				this.bgcv.drawCmpltDiv(this.sV.d, 0, 0);
+			else
+				this.bgcv.drawDiv(this.sV.dpd);
+			this.fct = this.frcv.cvt;
+			this.cp = "destination-in";
+			if (this.c.state == 2)
+				this.cp = "destination-out";
+			return true
+		} else
+			return false
+	};
+	this.resetMskAnim = function () {
+		if (!this.pozd) {
+			if (this.c.state == -1)
+				this.frcv.apndTo(this.sV.d.parentNode);
+			else
+				this.frcv.apndTo(this.sV.d)
+		}
+		this.resetBanim()
+	};
+	this.doAfterEffect = function () {
+		if (this.c.state == -1) {
+			this.sV.d.style.opacity = 1;
+			this.reset()
+		}
+	};
+	this.dltCv = function () {
+		try {
+			if (this.c.state == 2)
+				this.sV.dpd.style.opacity = 0;
+			if (this.c.state == 1)
+				this.sV.dpd.style.opacity = 1;
+			this.fct.clearRect(0, 0, this.w, this.h);
+			if (this.c.state == -1)
+				this.sV.d.parentNode.removeChild(this.frcv.cv);
+			else
+				this.sV.d.removeChild(this.frcv.cv)
+		} catch (a) {}
+
+	}
+};
+BCurve = function (a, b, c, d, e, f, g, h, i) {
+	this.x0 = a;
+	this.y0 = b;
+	this.x1 = c;
+	this.y1 = d;
+	this.x2 = e;
+	this.y2 = f;
+	this.x3 = g;
+	this.y3 = h;
+	this.dn = i;
+	this.getPointAfterT = function (a) {
+		var b = 1 / this.dn * a;
+		var c = 3 * (this.x1 - this.x0);
+		var d = 3 * (this.x2 - this.x1) - c;
+		var e = this.x3 - this.x0 - c - d;
+		var f = 3 * (this.y1 - this.y0);
+		var g = 3 * (this.y2 - this.y1) - f;
+		var h = this.y3 - this.y0 - f - g;
+		var i = e * b * b * b + d * b * b + c * b + this.x0;
+		var j = h * b * b * b + g * b * b + f * b + this.y0;
+		var k = {
+			x : i,
+			y : j
+		};
+		return k
+	}
+};
+Line = function (a, b, c, d, e) {
+	this.x0 = a;
+	this.y0 = b;
+	this.x1 = c;
+	this.y1 = d;
+	this.dn = e;
+	this.xd = Math.abs(this.x0 - this.x1);
+	this.yd = Math.abs(this.y0 - this.y1);
+	this.getPointAfterT = function (a) {
+		var b = this.xd / this.dn * a;
+		var c = this.yd / this.dn * a;
+		var d = this.x0 < this.x1 ? this.x0 + b : this.x0 - b;
+		var e = this.y0 < this.y1 ? this.y0 + c : this.y0 - c;
+		var f = {
+			x : d,
+			y : e
+		};
+		return f
+	};
+	this.getRevPointAfterT = function (a) {
+		var b = this.xd / this.dn * a;
+		var c = this.yd / this.dn * a;
+		var d = this.x1 < this.x0 ? this.x1 + b : this.x1 - b;
+		var e = this.y1 < this.y0 ? this.y1 + c : this.y1 - c;
+		var f = {
+			x : d,
+			y : e
+		};
+		return f
+	}
+};
+MNode = function (a) {
+	var b = a.split(",");
+	this.tp = b[0];
+	this.x0 = parseFloat(b[1]);
+	this.y0 = parseFloat(b[2]);
+	this.dn = 0;
+	switch (this.tp) {
+	case "L":
+		this.x1 = parseFloat(b[3]);
+		this.y1 = parseFloat(b[4]);
+		this.dn = parseFloat(b[5]) * 1e3;
+		this.ln = new Line(this.x0, this.y0, this.x1, this.y1, this.dn);
+		break;
+	case "C":
+		this.x1 = parseFloat(b[3]);
+		this.y1 = parseFloat(b[4]);
+		this.x2 = parseFloat(b[5]);
+		this.y2 = parseFloat(b[6]);
+		this.x3 = parseFloat(b[7]);
+		this.y3 = parseFloat(b[8]);
+		this.dn = parseFloat(b[9]) * 1e3;
+		this.bc = new BCurve(this.x0, this.y0, this.x1, this.y1, this.x2, this.y2, this.x3, this.y3, this.dn);
+		break
+	}
+	this.getNextPoint = function (a, b) {
+		var c;
+		switch (this.tp) {
+		case "M":
+		case "E":
+			c = {
+				x : this.x0,
+				y : this.y0
+			};
+			break;
+		case "L":
+			c = this.ln.getPointAfterT(b);
+			break;
+		case "C":
+			c = this.bc.getPointAfterT(b);
+			break
+		}
+		return c
+	}
+};
+MAnim = function (a) {
+	this.pnt = a;
+	this.Mns = new Array;
+	this.cNode = 0;
+	this.prvTm = 0;
+	this.MCmpltd = false;
+	var b = this.pnt.c.additionalData.split("|");
+	var c = 0;
+	for (var d = 0; d < b.length; d++) {
+		if (b[d].length > 1)
+			this.Mns[c++] = new MNode(b[d].replace(" ", ","))
+	}
+	this.resetMAnim = function (a) {
+		if (!this.pozd) {
+			this.cNode = 0;
+			this.prvTm = 0;
+			this.MCmpltd = false
+		}
+		this.pnt.resetBanim()
+	};
+	this.setEndPoint = function () {
+		var a = this.Mns[this.Mns.length - 1];
+		this.pnt.setTranslate(a.x0, a.y0)
+	};
+	this.getNextPoint = function (a, b) {
+		var c;
+		if (this.MCmpltd)
+			return c;
+		if (this.cNode >= this.Mns.length)
+			this.cNode = this.Mns.length - 1;
+		var d = this.Mns[this.cNode];
+		if (d.tp == "M" && b < 20 || d.tp == "E") {
+			c = d.getNextPoint(a, b - this.prvTm);
+			this.cNode++;
+			return c
+		} else if (b > this.prvTm + d.dn) {
+			this.prvTm += d.dn;
+			this.cNode++;
+			return this.getNextPoint(a, b)
+		} else {
+			c = d.getNextPoint(a, b - this.prvTm);
+			return c
+		}
+	}
+};

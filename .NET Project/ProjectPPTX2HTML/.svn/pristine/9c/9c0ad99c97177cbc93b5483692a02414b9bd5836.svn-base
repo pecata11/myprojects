@@ -1,0 +1,325 @@
+﻿
+
+EaseOut = EaseIn = function (a) {
+	this.inheritFrom = MskAnim;
+	this.inheritFrom(a);
+	this.Initialize = function (a) {
+		if (this.initMskAnim(a)) {
+			this.trDiff = 140
+		}
+	}
+};
+EaseOut.prototype.play = EaseIn.prototype.play = function () {
+	function b() {
+		if (a.pozd || a.stpd) {
+			a.stopCurrentAnimation();
+			return
+		}
+		var c = a.gtime() - a.st - a.c.start;
+		if (c <= 0) {
+			if (Math.abs(c) > a.c.start)
+				a.reset();
+			else
+				Cbfun(b);
+			return
+		}
+		a.playCurrentAnimation();
+		if (a.c.state == 1) {
+			var d = c >= a.c.length ? a.w : a.width / a.c.length * c;
+			var e = a.trDiff * (1 - d / a.w);
+			a.sV.elementAnimatedId.style.opacity = 0;
+			a.fct.save();
+			a.fct.clearRect(0, 0, a.w, a.h);
+			a.mc.cvt.save();
+			a.mc.cvt.clearRect(0, 0, a.w, a.h);
+			a.mc.cvt.drawImage(a.bgcv.cv, a.w - d, 0);
+			a.mc.cvt.restore();
+			a.mc.bdrawn = true;
+			a.frcv.draw(a.mc, false);
+			a.fct.restore();
+			a.setTranslate(-e, 0)
+		} else if (a.c.state == 2) {
+			var e = c >= a.c.length ? 0 : a.trDiff / a.c.length * c;
+			var f = c >= a.c.length ? 0 : 1 - 1 / a.c.length * c;
+			a.sV.elementAnimatedId.style.opacity = f;
+			a.setTranslate(-e, 0)
+		}
+		if (c >= a.c.length) {
+			a.dltCv();
+			a.doRepeat();
+			return
+		}
+		Cbfun(b)
+	}
+	this.resetMskAnim();
+	this.playBlockAnimation();
+	var a = this;
+	Cbfun(b);
+};
+FlyIn = FlyOut = CrawlOut = CrawlIn = function (a) {
+	this.inheritFrom = BaseAnimation;
+	this.inheritFrom(a);
+	this.Initialize = function (a) {
+		if (this.initBaseAnimation(a)) {
+			GetCurrentXYSlide(this);
+			this.xDif = this.fX - this.dX;
+			this.yDif = this.fY - this.dY;
+			this.mX = this.xDif / this.c.length;
+			this.mY = this.yDif / this.c.length;
+		}
+	}
+};
+FlyIn.prototype.play = FlyOut.prototype.play = CrawlIn.prototype.play = CrawlOut.prototype.play = function () {
+	function b() {
+		if (a.pozd || a.stpd) {
+			a.stopCurrentAnimation();
+			return
+		}
+		var c = a.gtime() - a.st - a.c.start;
+		if (c <= 0) {
+			if (Math.abs(c) > a.c.start) {
+				a.reset()
+			} else {
+				Cbfun(b)
+			}
+			return
+		}
+		if (a.animStarted == false) {
+			a.animStarted = true;
+			if (a.c.state == 2) {
+				var d = a.getTranslate();
+				if (a.left == null)
+					a.left = a.sV.elementId.style.left = parseInt(a.sV.elementId.style.left) + d.x + "px";
+				else
+					a.sV.elementId.style.left = a.left;
+				if (a.top == null)
+					a.top = a.sV.elementId.style.top = parseInt(a.sV.elementId.style.top) + d.y + "px";
+				else
+					a.sV.elementId.style.top = a.top;
+				GetCurrentXYSlide(a);
+				a.xDif = a.fX - parseInt(a.sV.elementId.style.left);
+				a.yDif = a.fY - parseInt(a.sV.elementId.style.top);
+				a.mX = a.xDif / a.c.length;
+				a.mY = a.yDif / a.c.length
+			} else {
+				a.sV.elementId.style.left = this.dx + "px";
+				a.sV.elementId.style.top = this.dx + "py";
+				a.setTranslate(-1 * this.xDif, -1 * this.yDif)
+			}
+			a.sV.elementAnimatedId.style.opacity = 1
+		}
+		a.playCurrentAnimation();
+		var e = 0;
+		var f = 0;
+		if (a.c.state == 1) {
+			e = c * a.mX - a.cX;
+			f = c * a.mY - a.cY
+		} else {
+			e = c * a.mX;
+			f = c * a.mY
+		}
+		a.setTranslate(e, f);
+		if (c >= a.c.length) {
+			if (a.c.state == 1) {
+				a.setTranslate(0, 0)
+			} else {
+				a.sV.elementAnimatedId.style.opacity = 0;
+				a.setTranslate(0, 0)
+			}
+			a.doRepeat();
+			return
+		}
+		Cbfun(b)
+	}
+	this.resetBaseAnimation();
+	this.playBlockAnimation();
+	this.cX = this.xDif;
+	this.cY = this.yDif;
+	this.pt = 0;
+	var a = this;
+	this.animStarted = false;
+	Cbfun(b);
+};
+Fade = function (a) {
+	this.inheritFrom = BaseAnimation;
+	this.inheritFrom(a);
+	this.Initialize = function (a) {
+		if (this.initBaseAnimation(a)) {
+			this.mO = 1 / this.c.length
+		}
+	}
+};
+Fade.prototype.play = function () {
+	function b() {
+		if (a.pozd || a.stpd) {
+			a.stopCurrentAnimation();
+			return
+		}
+		var c = a.gtime() - a.st - a.c.start;
+		if (c <= 0) {
+			if (Math.abs(c) > a.c.start) {
+				a.reset()
+			} else {
+				Cbfun(b)
+			}
+			return
+		}
+		a.playCurrentAnimation();
+		if (a.animStarted == false) {
+			a.animStarted = true;
+			if (a.c.state == 2)
+				a.oF = 0;
+			else
+				a.oF = 1
+		}
+		var d = c * a.mO;
+		if (a.oF == 0)
+			a.sV.elementAnimatedId.style.opacity = 1 - d;
+		else
+			a.sV.elementAnimatedId.style.opacity = d;
+		if (c >= a.c.length) {
+			a.sV.elementAnimatedId.style.opacity = a.oF;
+			a.doRepeat();
+			return
+		}
+		Cbfun(b)
+	}
+	this.resetBaseAnimation();
+	this.playBlockAnimation();
+	this.animStarted = false;
+	var a = this;
+	Cbfun(b);
+};
+FadedZoom = function (a) {
+	this.inheritFrom = BaseAnimation;
+	this.inheritFrom(a);
+	this.Initialize = function (a) {
+		if (this.initBaseAnimation(a)) {
+			this.mO = 1 / this.c.length;
+			this.mS = 1 / this.c.length;
+			if (this.c.state != 2) {
+				this.fO = 1;
+				this.fSCale = 1
+			} else {
+				this.mO = this.mO * -1;
+				this.fO = 0;
+				this.fSCale = 0
+			}
+		}
+	}
+};
+FadedZoom.prototype.play = function () {
+	function b() {
+		if (a.pozd || a.stpd) {
+			a.stopCurrentAnimation();
+			return
+		}
+		var c = a.gtime() - a.st - a.c.start;
+		if (c <= 0) {
+			if (Math.abs(c) > a.c.start) {
+				a.reset()
+			} else {
+				Cbfun(b)
+			}
+			return
+		}
+		a.playCurrentAnimation();
+		var d;
+		var e = 0;
+		if (a.fO == 0) {
+			d = 1 - c * a.mS;
+			e = 1 - c * a.mO * -1
+		} else {
+			d = c * a.mS;
+			e = c * a.mO
+		}
+		a.sV.elementAnimatedId.style.opacity = e;
+		a.setScale(d, d);
+		if (c >= a.c.length) {
+			a.sV.elementAnimatedId.style.opacity = a.fO;
+			a.setScale(1, 1);
+			a.doRepeat();
+			return
+		}
+		Cbfun(b)
+	}
+	this.resetBaseAnimation();
+	this.playBlockAnimation();
+	var a = this;
+	Cbfun(b);
+};
+RiseUp = SinkDown = function (a) {
+	this.inheritFrom = BaseAnimation;
+	this.inheritFrom(a);
+	this.Initialize = function (a) {
+		if (this.initBaseAnimation(a)) {
+			var b = gv.sh;
+			var c = parseInt(this.sV.elementId.style.top);
+			var d = parseInt(this.sV.height);
+			this.dY = b - c + 20;
+			this.yDif1 = this.dY / (this.c.length * .9);
+			this.yDif2 = 20 / (this.c.length * .1);
+			this.oDif = 1 / this.c.length
+		}
+	}
+};
+RiseUp.prototype.play = SinkDown.prototype.play = function () {
+	function b() {
+		if (a.pozd || a.stpd) {
+			a.stopCurrentAnimation();
+			return
+		}
+		var c = a.gtime() - a.st - a.c.start;
+		if (c <= 0) {
+			if (Math.abs(c) > a.c.start)
+				a.reset();
+			else
+				Cbfun(b);
+			return
+		}
+		a.playCurrentAnimation();
+		if (a.bStdAnm == false && a.c.state == 1) {
+			a.sV.elementAnimatedId.style.opacity = 1;
+			a.setTranslate(0, a.dY - 20);
+			a.bStdAnm = true
+		}
+		var d;
+		var e = c / a.c.length * 100;
+		var f = 0;
+		if (a.c.state == 1) {
+			if (e < 90) {
+				var g = (c - a.c.length * .1) / (a.c.length * .9) * 90;
+				var h = Math.cos(Math.PI / 180 * g);
+				var f = h * (a.c.length * .9 - c) * a.yDif1
+			} else {
+				f = (c - a.c.length * .9) * a.yDif2
+			}
+			a.setTranslate(0, f - 20);
+			d = c * a.oDif
+		} else {
+			if (e < 10) {
+				var f = -(c * a.yDif2)
+			} else {
+				var g = (c - a.c.length * .1) / (a.c.length * .9) * 90;
+				var h = Math.cos(Math.PI / 180 * g);
+				f = a.dY - a.dY * h - 20
+			}
+			a.setTranslate(0, f);
+			d = 1 - c * a.oDif
+		}
+		a.sV.elementAnimatedId.style.opacity = d;
+		if (c >= a.c.length) {
+			if (a.c.state == 2)
+				a.sV.elementAnimatedId.style.opacity = 0;
+			a.setTranslate(0, 0);
+			a.doRepeat();
+			return
+		}
+		Cbfun(b)
+	}
+	this.resetBaseAnimation();
+	this.playBlockAnimation();
+	this.bStdAnm = false;
+	var a = this;
+	Cbfun(b);
+};

@@ -1,0 +1,101 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using DocumentFormat.OpenXml.Presentation;
+using ClearSlideLibrary.Dom;
+
+namespace ClearSlideLibrary.Animations
+{
+    public class SimpleAnimation : IAnimation
+    {
+        public SimpleAnimation()
+        {
+            AdditionalData = "0";
+            ObjectId = "0";
+        }
+        public int Start { get; set; }
+        public int Length { get; set; }
+        public string ObjectId { get; set; }
+        public int Repetitions { get; set; }
+        public int InitialState { get; set; }
+        public string Type { get; set; }
+        public string AdditionalData { get; set; }
+        public List<IAnimation> InnerAnimations { get; set; }
+        public DocumentFormat.OpenXml.EnumValue<DocumentFormat.OpenXml.Presentation.TimeNodeValues> timingType { get; set; }
+
+        public int getCalculatedLength()
+        {
+            if (InnerAnimations==null || InnerAnimations.Count==0)
+                return Length;
+            int res=0;
+            foreach (SimpleAnimation anim in InnerAnimations)
+                res = res < anim.getCalculatedLength()+anim.Start?  anim.getCalculatedLength()+anim.Start : res;
+            return res;
+        }
+
+        public bool IsItEntranceAnimation()
+        {
+            return InitialState == 1; //I am not sure if it is correct ;)
+        }
+
+        protected string GetObjectIdForJSON()
+        {
+            int res = 0;
+            string result = int.TryParse(ObjectId, out res) ? ObjectId : "'" + ObjectId + "'";
+            return result;
+        }
+        protected string GetE3Value()
+        {
+            int res = 0;
+            string result = int.TryParse(ObjectId, out res) ? "": ",e3:['s1s" + ObjectId + "']";
+            return result;
+        }
+        public virtual string GetJsonString()
+        {
+
+            return "{c0:" + GetObjectIdForJSON() + ",c1:" + Start + ",c2:" + Length + ",c3:" + Repetitions + ",c4:" + InitialState +
+                   ",c5:'" + Type + "',s0:" + AdditionalData + ",v:0,e0:" + GetE0Value() + ",e1:1,e2:0" + GetE3Value() + "}";
+        }
+
+        protected string GetE0Value()//if image then 3 else 2
+        {
+            int res = 0;
+            return int.TryParse(ObjectId, out res) ? "3" : "2";
+        }
+
+        public void FixAnimationTimings(CommonBehavior behavior, int slideIndex)
+        {
+            String intValue = behavior.TargetElement.ShapeTarget.ShapeId.Value;
+            ObjectId = intValue == null ? "" + 0 : intValue;
+            int spd = behavior.CommonTimeNode.Speed == null ? 100 : behavior.CommonTimeNode.Speed.Value;
+            intValue = behavior.CommonTimeNode.Duration;
+            Length = intValue == null  || intValue == "indefinite"? 0 : int.Parse(intValue)*spd/100;
+            int delay = 0;
+            if (behavior.CommonTimeNode.StartConditionList != null &&
+                behavior.CommonTimeNode.StartConditionList.Any())
+            {
+                foreach (Condition cond in behavior.CommonTimeNode.StartConditionList)
+                    if (cond.Delay != null && cond.Delay.HasValue)
+                        delay = delay + int.Parse(cond.Delay.Value);
+            }
+
+            if (behavior.TargetElement.ShapeTarget.TextElement != null && behavior.TargetElement.ShapeTarget.TextElement.ParagraphIndexRange != null)
+            {
+                int res = 0;
+                bool isTextWithEffect = int.TryParse(ObjectId, out res) && PPTShape.effectShapes.Contains(slideIndex + "_" + res);
+                if (!isTextWithEffect)
+                {
+                    ObjectId = ObjectId + "p" + behavior.TargetElement.ShapeTarget.TextElement.ParagraphIndexRange.Start;
+                }
+                
+                //TODO: add support for paragraph start-end index range
+            }
+
+            intValue = behavior.CommonTimeNode.RepeatDuration;
+            Repetitions = intValue == null ? 1 : int.Parse(intValue);
+            InnerAnimations = new List<IAnimation>();
+            Start = delay;
+
+        }
+    }
+}

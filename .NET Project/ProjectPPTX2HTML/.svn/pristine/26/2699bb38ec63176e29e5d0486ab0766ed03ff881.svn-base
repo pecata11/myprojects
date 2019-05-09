@@ -1,0 +1,188 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using ClearSlideLibrary.Dom;
+using System.IO;
+
+namespace ClearSlideLibrary.HtmlController
+{
+    internal class HtmlSlide : HtmlPresentationElement
+    {
+        public PPTContainerShape ContainerShape { get; set; }
+        private readonly string _fileName;
+        private readonly string dirPath;
+
+        public HtmlSlide(string slideid, string slideClass, string fileName, string dirpath)
+        {
+            base.id = slideid;
+            base.cssClass = slideClass;
+            this._fileName = fileName;
+            this.dirPath = dirpath;
+        }
+
+        public override string DrawElement()
+        {
+            StringBuilder slideBuilder = new StringBuilder(1000);
+            slideBuilder.Append("<div class=\"" + cssClass + "\" id=\"" + id + "\"><img />");
+            try
+            {
+                GenerateConnectionShapes(slideBuilder);
+                GenerateImages(slideBuilder);
+                GenerateGroupShapes(slideBuilder);
+                GenerateShapes(slideBuilder);
+                GenerateSmartArts(slideBuilder);
+            }
+            catch (ArgumentNullException ex)
+            {
+                Console.WriteLine("The slide has no shapes." + ex);
+            }
+            slideBuilder.Append("</div>");
+
+            return slideBuilder.ToString();
+        }
+
+        private void GenerateGIFImages(StringBuilder slide)
+        {
+            string slideId = id.Substring(0, 2);
+            int slideNumber = Int32.Parse(slideId.Substring(1, 1));
+
+            if (slideNumber == 2)
+            {
+                string imageName = "1026";
+                HtmlImageGIF image = new HtmlImageGIF(slideId, _fileName, imageName,
+                                                      top: 89, left: 66);
+                image.Width = 56;
+                image.Height = 44;
+                slide.Append(image.DrawElement());
+            }
+        }
+
+        private void GenerateImages(StringBuilder slide)
+        {
+            if (ContainerShape.Images.Count > 0)
+            {
+                foreach (PPTImage image in ContainerShape.Images)
+                {
+                    DrawShapeHtml(slide, image);
+                }
+            }
+        }
+
+        private void GenerateShapes(StringBuilder slide)
+        {
+            if (ContainerShape.Shapes.Count > 0)
+            {
+                foreach (PPTShape shape in ContainerShape.Shapes)
+                {
+
+                    DrawShapeHtml(slide, shape);
+                }
+            }
+        }
+
+        private void GenerateSmartArts(StringBuilder slide)
+        {
+            if (ContainerShape.GraphicFrames.Count > 0)
+            {
+                foreach (PPTGraphicFrame frame in ContainerShape.GraphicFrames)
+                {
+                    DrawShapeHtml(slide, frame);
+                }
+            }
+        }
+        private void GenerateGroupShapes(StringBuilder slide)
+        {
+            if (ContainerShape.GroupShapes.Count > 0)
+            {
+                foreach (PPTGroupShape grShape in ContainerShape.GroupShapes)
+                {
+                    DrawShapeHtml(slide, grShape);
+                }
+            }
+        }
+
+        private void GenerateConnectionShapes(StringBuilder slide)
+        {
+            if (ContainerShape.ConnectionShapes.Count > 0)
+            {
+                foreach (PPTConnectionShape connectionShape in ContainerShape.ConnectionShapes)
+                {
+                    DrawShapeHtml(slide, connectionShape);
+                }
+            }
+        }
+        private void DrawShapeHtml(StringBuilder slide, PPTShapeBase baseShape)
+        {
+            int left = baseShape.VisualShapeProp.Left();
+            int width = baseShape.VisualShapeProp.PixelWidth();
+            int top = baseShape.VisualShapeProp.Top();
+            int height = baseShape.VisualShapeProp.PixelHeight();
+            string Id = baseShape.NonVisualShapeProp.Id;
+            bool invisible = baseShape.Invisible;
+            bool animatable = baseShape.Animatable;
+
+
+
+            //simple fix (not good but work for now).
+            DirectoryInfo dest = new DirectoryInfo(dirPath);
+            FileInfo[] files = dest.GetFiles();
+
+            foreach (FileInfo file in files)
+            {
+                string fname = Path.GetFileNameWithoutExtension(file.Name);
+
+                if (fname.Equals(Id))
+                {
+                    if (baseShape is PPTGraphicFrame)
+                    {
+                        HtmlSmartArt htmlSmartArt = new HtmlSmartArt(Id, width, height, top,
+                                                                    left, invisible, animatable);
+                        slide.Append(htmlSmartArt.DrawElement());
+                    }
+                    else if (baseShape is PPTGroupShape)
+                    {
+                        HtmlGroupShape htmlShape = new HtmlGroupShape(Id, width, height, top,
+                                                                        left, invisible, animatable);
+                        slide.Append(htmlShape.DrawElement());
+                    }
+                    else if (baseShape is PPTConnectionShape)
+                    {
+                        HtmlConnectionShape htmlShape =
+                            new HtmlConnectionShape(Id, width, height, top,
+                                                    left, invisible, animatable);
+                        slide.Append(htmlShape.DrawElement());
+                    }
+                    else if (baseShape is PPTShape)
+                    {
+                        PPTShape s = (PPTShape)baseShape;
+
+                        
+                        HtmlShape htmlShape = new HtmlShape(Id, width, height, top,
+                                                             left, invisible, animatable)
+                                                 {
+                                                     Shape = s,
+                                                     Rotate = s.VisualShapeProp.Rotate
+                                                 };
+                        slide.Append(htmlShape.DrawElement());
+                    }
+                    else if (baseShape is PPTImage)
+                    {
+                        HtmlImage htmlImage = new HtmlImage(Id, width, height,
+                                                            top, left, invisible, animatable);
+                        slide.Append(htmlImage.DrawElement());
+                    }
+                }
+            }
+
+        }
+
+
+        public override string ToString()
+        {
+            Console.WriteLine("The id is:" + id);
+            Console.WriteLine("The cssclass is:" + cssClass);
+
+            return id + cssClass;
+        }
+    }
+}

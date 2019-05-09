@@ -1,0 +1,194 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using DocumentFormat.OpenXml.Drawing;
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Presentation;
+using ClearSlideLibrary.Dom.PPTTexts;
+using Shape = DocumentFormat.OpenXml.Presentation.Shape;
+using TextBody = DocumentFormat.OpenXml.Presentation.TextBody;
+using DocumentFormat.OpenXml;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
+using System.IO;
+
+namespace ClearSlideLibrary.Dom
+{
+    public class PPTShape : PPTShapeBase
+    {
+        // contains values of type: slideIndex_shapeId
+        public static LinkedList<string> effectShapes = new LinkedList<string>();
+        private const double RotationIndex = 60000;
+        private const string PictureBulletDirName = "PictureBullet";
+
+        public Boolean IsText { get; set; }
+        public PPTSlide slide { get; set; }
+        private PlaceholderShape placeholder;
+
+        // Create a new linked list of strings.
+        public LinkedList<PPTParagraph> Texts = new LinkedList<PPTParagraph>();
+
+        public PPTShape(SlidePart slidePart, Shape shape, PPTSlide slide): base()
+        {
+            this.slide = slide;
+
+            SetShapeVisualProperties(slidePart, shape);
+            SetShapeNonVisualProperties(slidePart, shape);
+            SetSpecificProperties(slidePart, shape);
+
+        }
+
+
+        private void SetShapeNonVisualProperties(SlidePart slidePart, Shape shape)
+        {
+
+            if (shape.NonVisualShapeProperties.NonVisualDrawingProperties.HyperlinkOnClick != null)
+
+                foreach (HyperlinkRelationship link in slidePart.HyperlinkRelationships)
+                {
+                    if (link.Id.Equals(shape.NonVisualShapeProperties.NonVisualDrawingProperties.HyperlinkOnClick.Id))
+                    {
+                        ClickLinkUrl = link.Uri.IsAbsoluteUri ? link.Uri.AbsoluteUri : link.Uri.OriginalString;
+
+                    }
+                }
+            if (shape.NonVisualShapeProperties.NonVisualDrawingProperties.HyperlinkOnHover != null)
+                foreach (HyperlinkRelationship link in slidePart.HyperlinkRelationships)
+                {
+                    if (link.Id.Equals(shape.NonVisualShapeProperties.NonVisualDrawingProperties.HyperlinkOnHover.Id))
+                    {
+                        HoverLinkUrl = link.Uri.IsAbsoluteUri ? link.Uri.AbsoluteUri : link.Uri.OriginalString;
+                    }
+                }
+
+            var nonVisualShapeProp = new PPTNonVisualShapeProp
+                                         {
+                                             Id = "s1s" + //HARD CODED: we split it into separate HTML files!
+                                                  shape.NonVisualShapeProperties.NonVisualDrawingProperties.Id,
+                                             Name = shape.LocalName,
+                                             Type = "PPTShape"
+                                         };
+            base.NonVisualShapeProp = nonVisualShapeProp;
+        }
+
+        private void SetShapeVisualProperties(SlidePart slidePart, Shape shape)
+        {
+
+            if (shape.NonVisualShapeProperties.ApplicationNonVisualDrawingProperties.PlaceholderShape != null)
+            {
+                placeholder = shape.NonVisualShapeProperties.ApplicationNonVisualDrawingProperties.
+                                        PlaceholderShape;
+                if (placeholder.Type == null)
+                    placeholder.Type = PlaceholderValues.Body;
+            }
+
+
+            base.VisualShapeProp = new PPTVisualPPTShapeProp();
+            base.SetSlideLayoutVisualShapeProperties(slidePart, shape);
+            if (shape.ShapeProperties.Transform2D != null)
+            {
+                Int32Value rot = shape.ShapeProperties.Transform2D.Rotation;
+                if (rot != null)
+                {
+                    double degrees = Math.Round(rot / RotationIndex);
+                    if (degrees < 0)
+                    {
+                        degrees = 360 + degrees;
+                    }
+                    base.VisualShapeProp.Rotate = degrees;
+                }
+
+                base.VisualShapeProp.Extents = shape.ShapeProperties.Transform2D.Extents;
+                base.VisualShapeProp.Offset = shape.ShapeProperties.Transform2D.Offset;
+            }
+        }
+
+        private void SetSpecificProperties(SlidePart slidePart, Shape shape)
+        {
+            IsText = true;
+            //Check if this is text
+            if (shape.TextBody == null)
+            {
+                IsText = false;
+                return;
+            }
+
+            if (shape.TextBody.BodyProperties != null)
+            {
+                if (shape.TextBody.BodyProperties.Anchor != null)
+                    VerticalAlign = shape.TextBody.BodyProperties.Anchor;
+                if (shape.TextBody.BodyProperties.GetFirstChild<NormalAutoFit>() != null &&
+                    shape.TextBody.BodyProperties.GetFirstChild<NormalAutoFit>().FontScale != null)
+                    fontScale = shape.TextBody.BodyProperties.GetFirstChild<NormalAutoFit>().FontScale.Value;
+
+            }
+            int index = 0;
+            foreach (var paragraph in shape.TextBody.Descendants<Paragraph>())
+            {
+                var par = new PPTParagraph(slide, placeholder)
+                {
+                    Paragraph = index++
+                };
+
+                if (paragraph.ParagraphProperties != null)
+                {
+                    int level = paragraph.ParagraphProperties.Level == null ?
+                               -1 : paragraph.ParagraphProperties.Level.Value;
+                    par.Level = level;
+                }
+
+                par.SetParagraphProperties(paragraph, slidePart,
+                                           shapeListStyleMaster, shapeListStyleLayout);
+                bool hasText = false;
+                foreach (var obj in paragraph.ChildElements)
+                {
+                    hasText = GetParagraphChildElements(shape, par, hasText, obj);
+                }
+                //This is because when we set paragraph properties we add the bullet to the text runs.
+                //If we don't have text it still outputs the bullet character. 
+                if (par.bullet != null && hasText)
+                {
+                    par.RunPropList.Insert(0, par.bullet);
+                }
+                Texts.AddLast(par);
+            }
+        }
+
+        private bool GetParagraphChildElements(Shape shape, PPTParagraph par, bool hasText, OpenXmlElement obj)
+        {
+            if (obj is Run)
+            {
+                Run run = (Run)obj;
+                hasText = true;
+                PPTRunProperties runProp = new PPTRunProperties(par.defaultRunProperties);
+                runProp.Text = run.Text.Text;
+                runProp.SetRunProperties(run.RunProperties, shape, ref effectShapes);
+                runProp.FontSize = Math.Round(fontScale * runProp.FontSize / Globals.PercentageConstant);
+                par.RunPropList.Add(runProp);
+            }
+
+            else if (obj is Field)
+            {
+                Field run = (Field)obj;
+                hasText = true;
+                PPTRunProperties runProp = new PPTRunProperties(par.defaultRunProperties);
+                runProp.Text = run.Text.Text;
+                runProp.SetRunProperties(run.RunProperties, shape, ref effectShapes);
+                runProp.FontSize = Math.Round(fontScale * runProp.FontSize / Globals.PercentageConstant);
+                par.RunPropList.Add(runProp);
+            }
+
+            else if (obj is Break)
+            {
+                Break aBreak = (Break)obj;
+                PPTRunProperties runProp = new PPTRunProperties(par.defaultRunProperties);
+                runProp.SetRunProperties(aBreak.RunProperties, shape, ref effectShapes);
+                runProp.FontSize = Math.Round(fontScale * runProp.FontSize / Globals.PercentageConstant);
+                runProp.isBreak = true;
+                par.RunPropList.Add(runProp);
+            }
+            return hasText;
+        }
+    }
+}

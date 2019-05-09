@@ -1,0 +1,767 @@
+//
+//  MainViewController.m
+//  BirthdayCalendar
+//
+//  Created by Petko Yanakiev on 6/5/12.
+//  Copyright (c) 2012 __MyCompanyName__. All rights reserved.
+//
+
+#import "MainViewController.h"
+#import "Constants.h"
+#import "config.h"
+#import "Debug.h"
+#import "Facebook.h"
+#import "HolidayAppDelegate.h"
+#import "Facebook+Singleton.h"
+#import "FaceBookManager.h"
+#import "DataModelManager.h"
+#import "UserData.h"
+#import "ManageBirthdayViewController.h"
+#import "UINavigationBar+UINavigationBarCategory.h"
+#import "MBProgressHUD.h"
+#import "Utils.h"
+#import "BirthdayCoreDataSource.h"
+#import "KalViewController.h"
+#import "EditBirthdayViewController.h"
+#import "ContactsViewController.h"
+#import <AddressBook/AddressBook.h>
+#import "ContactInfo.h"
+#import "Reachability.h"
+#import "NSDate+Helper.h"
+
+#define SECTION_ADD 0
+#define SECTION_MANAGE 1
+
+#define ADD_ROW_FB 0
+#define ADD_ROW_CON 1
+#define ADD_ROW_NEW 2
+#define sendLimit 50
+#define SERIAL_PATH @"serial.dat"
+
+@interface MainViewController ()
+
+- (void)fromContacts;
+- (void)getContacts:(NSMutableArray *)ff;
+- (void)sendLogicHelper:(NSMutableArray *)nextUsers;
+- (void)sendMessage:(NSMutableArray *)recTen;
+- (void)sendLogic;
+-(void) readAddressBook;
+- (NSString*)getUserPhone:(ABRecordRef)ref;
+- (NSString *)getPersonName:(NSString *)lastName firstName:(NSString *)firstName;
+- (void)getFacebookPhoto:(id)photoObject:(NSString**)photo;
+- (void)findEmptyPhotoUsers;
+@end
+
+
+@implementation MainViewController
+
+@synthesize tableViewMain=_tableViewMain;
+@synthesize managedObjectContext;
+@synthesize dataModel;
+@synthesize markedMemorize;
+@synthesize mapOfUsers;
+
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        self.tabBarItem.tag=3;
+        [self.tabBarItem setTitle:@"Add"];
+        [self.tabBarItem setFinishedSelectedImage:[UIImage imageNamed:@"AddD-selected.png"] withFinishedUnselectedImage:[UIImage imageNamed:@"AddD.png"]];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(getUserFriends) name:@"FBDidLogin" object:nil];
+    }
+    return self;
+}
+
+- (void)didReceiveMemoryWarning
+{
+    // Releases the view if it doesn't have a superview.
+    [super didReceiveMemoryWarning];
+    
+    // Release any cached data, images, etc that aren't in use.
+}
+
+#pragma mark - View lifecycle
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    
+    self.managedObjectContext=[DataModelManager getObjectModel];
+    dataModel = [[DataModelManager alloc]init];
+    mapOfUsers=[[NSMutableDictionary alloc]init];
+    tableViewMain.backgroundColor = [UIColor clearColor];
+    [tableViewMain setBackgroundColor:[UIColor clearColor]];
+    [tableViewMain setSeparatorStyle:UITableViewCellSeparatorStyleNone];
+    self.view.backgroundColor = [UIColor colorWithPatternImage:[UIImage imageNamed:@"Background.png"]];
+    
+    markedMemorize=[[NSMutableArray alloc]init];
+    
+    NSMutableArray* ar=[dataModel fetchRecords];
+    if([ar count] == 0)
+    {
+        NSString* mes=@"Begin by selecting all contacts whose birthdays you want to remember.";
+        UIAlertView *alert=[[UIAlertView alloc] initWithTitle:@"Welcome!" message:mes delegate:self cancelButtonTitle:@"Import" otherButtonTitles:@"Cancel", nil];
+        [alert show];
+        alert.tag=2;
+        [alert release];
+    }
+}
+
+
+-(void) getUserFriends{
+    
+    NSMutableDictionary *params = [NSMutableDictionary dictionaryWithObjectsAndKeys:
+                                    @"id,picture,name,birthday",@"fields",nil];
+#ifdef DEBUG
+    NSLog(@"%@", [[Facebook shared] accessToken]);
+#endif
+    if ([[Facebook shared] accessToken]) {
+        [[Facebook shared] requestWithGraphPath:@"me/friends" andParams:params andHttpMethod:@"GET" andDelegate:self];
+    } else {
+        tapCount = 0;
+        [[Facebook shared] authorize];
+    }
+}
+
+- (void)getFacebookPhoto:(id)photoObject:(NSString**)photo{
+  
+    if([photoObject isKindOfClass:[NSDictionary class]])
+    {
+        NSDictionary *photoDict = photoObject;
+        //NSDictionary* internalDict = [photoDict objectForKey:@"data"];
+        //photo = [internalDict objectForKey:@"url"];
+        for (id key in photoDict){
+            NSDictionary* internalDict = [photoDict objectForKey:key];
+            for(id key1 in internalDict){
+                if([key1 isEqual:@"url"])
+                {
+                    (*photo) = [internalDict objectForKey:key1];
+                    break;
+                }
+            }
+        }
+    }
+    else if([photoObject isKindOfClass:[NSString class]])
+    {
+        (*photo) = photoObject;
+    }
+
+}
+
+- (void)saveFriendsToDataModel:(id)result {
+    
+    NSArray *resultData = [result objectForKey:@"data"];
+    
+    NSUserDefaults *standardUserDefaults =
+                        [NSUserDefaults standardUserDefaults];
+    NSMutableDictionary* serializedUsers = [standardUserDefaults objectForKey:@"mapOfUsers"];
+    //NSLog(@"Thej serializedUsers are:%@",serializedUsers);
+    if ([resultData count] > 0) 
+    {
+        for (NSDictionary *friend in resultData) 
+        {
+            NSString *uid=[friend objectForKey:@"id"];
+            NSString *name = [friend objectForKey:@"name"];
+            NSString *birthday = [friend objectForKey:@"birthday"];
+            id photoObject=[friend objectForKey:@"picture"];
+            NSString *photo;
+            [self getFacebookPhoto:photoObject:&photo];
+            
+#ifdef DEBUG
+            NSLog(@"The id is:%@",uid);
+            NSLog(@"The name is:%@",name);
+            NSLog(@"The birthday is:%@",birthday);
+            NSLog(@"The photo is:%@",photo);
+#endif
+            [markedMemorize addObject:uid];
+            
+            if(birthday != nil)
+            {
+                NSString *dateText = [Utils formatFaceBookDateString:birthday];
+#ifdef DEBUG
+                NSLog(@"The dateText is:%@",dateText);
+#endif
+                if(dateText != nil && photo != nil)
+                {
+                    NSData* thumb = nil;
+                    if(serializedUsers != nil)
+                    {
+                        for(NSString *uidFromMap in [serializedUsers allKeys])
+                        {
+                          if([uid isEqualToString:uidFromMap]){
+                            //if we have empty image from FB, change with the remembered in the mapOfUsers.
+                            
+                              //if ([photo rangeOfString:@"static-ak"].location !=                                   NSNotFound){
+                                    uid = uidFromMap;
+                                    thumb = [serializedUsers objectForKey:uidFromMap];
+                              //  }
+                            }
+                        }
+                    }
+                    [dataModel saveUserToModel:uid:name:dateText:photo:thumb];
+                }
+            }
+        }
+        [dataModel savingContext];
+    } 
+    else
+    {
+        NSLog(@"You have no friends.");
+    }
+}
+
+- (void)findEmptyPhotoUsers {
+    
+    NSMutableArray *currentRecords = [dataModel fetchRecords];
+     NSUserDefaults *standardUserDefaults = [NSUserDefaults standardUserDefaults];
+     NSMutableDictionary* serializedUsers = [[standardUserDefaults objectForKey:@"mapOfUsers"]mutableCopy];
+    
+    for(UserData *uData in currentRecords)
+    {
+        if ([uData.photo isEqualToString:@"empty"])
+        {
+            if(uData.thumbimage != nil)
+            {
+                [mapOfUsers setObject:uData.thumbimage
+                                     forKey:uData.userID];
+            }
+        }
+    }
+    
+    NSArray * ar = [mapOfUsers allKeys];
+    if([ar count] > 0){
+        //if we have a edit user photo serialize it.
+        if(serializedUsers != nil)
+        {
+          [serializedUsers addEntriesFromDictionary:mapOfUsers];
+          [standardUserDefaults setObject:serializedUsers forKey:@"mapOfUsers"];
+        }
+        else
+        {
+            [standardUserDefaults setObject:mapOfUsers forKey:@"mapOfUsers"];
+        }
+    }
+}
+
+- (void)deleteUserIfPresentInModel:(id)result {
+    
+    NSArray *resultData = [result objectForKey:@"data"];
+    if ([resultData count] > 0)
+    {
+        for (NSDictionary *friend in resultData)
+        {
+            NSString *uid = [friend objectForKey:@"id"];
+            NSString *name = [friend objectForKey:@"name"];
+            [dataModel deleteCurrentObjectWithNameAndID:name:uid];
+        }
+    }
+}
+
+
+- (void)request:(FBRequest *)request didLoad:(id)result {
+    
+    MBProgressHUD *hud =
+    [MBProgressHUD showHUDAddedTo:self.view animated:YES];
+    hud.minShowTime = 2;
+    hud.labelText = @"Importing birthdays...";
+    
+    [self findEmptyPhotoUsers];
+    
+    [self deleteUserIfPresentInModel:result];
+    [dataModel deleteAllObjects:@"ContactsData"];
+    
+    HolidayAppDelegate *appDelegate = (HolidayAppDelegate *)[[UIApplication sharedApplication] delegate];
+    
+    dispatch_async(dispatch_get_global_queue
+                   ( DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+                       
+        [self saveFriendsToDataModel:result];
+
+        dispatch_sync(dispatch_get_main_queue(), ^{
+        
+#ifdef SEND_APP_REQUESTS
+        [self sendLogic];
+#endif
+            [MBProgressHUD hideHUDForView:self.view animated:YES];
+            //            UIAlertView *alert=[[UIAlertView alloc] initWithTitle:@"Import of Facebook contacts complete." message:nil delegate:self cancelButtonTitle:@"Ok" otherButtonTitles:nil, nil];
+            //                        [alert show];
+            //                        alert.tag = 1;
+            //                        [alert release];
+            //
+            
+            tapCount = 0;
+            appDelegate.tabBarController.selectedIndex = 1;
+            [appDelegate startNotifications];
+        });
+    });
+}
+
+- (void)sendMessage:(NSMutableArray *)recTen
+{
+    
+    NSMutableString *mes = [[NSMutableString alloc]init];
+    for(int i = 0; i < [recTen count]; i++)
+    {        
+        [mes appendString:[recTen objectAtIndex:i]];
+        if(i == [recTen count]-1)
+        {
+            [mes appendString:@" "];
+        }
+        else
+        {
+            [mes appendString:@","];
+        }
+    }
+    NSMutableDictionary* params = [NSMutableDictionary dictionaryWithObjectsAndKeys:
+                                   @"I'd like to add your birthday to my calendar on my mobile phone.",  @"message",
+                                   mes,@"to",
+                                   nil];
+    [[Facebook shared] dialog:@"apprequests"
+                    andParams:params
+                  andDelegate:self];
+    [mes release];
+}
+
+- (void)sendLogicHelper:(NSMutableArray *)nextUsers
+{
+    NSMutableArray *recTen=[[NSMutableArray alloc]init];
+    int recCount=[nextUsers count];
+    
+    if([nextUsers count] >= sendLimit)
+    {
+        for(int i = 0,j = sendLimit - 1; i < sendLimit || j >= 0; i++, j--)
+        {
+            [recTen addObject:[nextUsers objectAtIndex:i]];
+            [markedMemorize removeObjectAtIndex:j];
+        }
+        [self sendMessage:recTen];
+    }
+    else
+    {
+        if(recCount != 0)
+        {
+            for(int i = 0; i < recCount; i++)
+            {
+                [recTen addObject:[nextUsers objectAtIndex:i]];
+                [markedMemorize removeLastObject];
+            }
+            [self sendMessage:recTen];
+        }
+    }
+    [recTen release];
+}
+
+- (void)sendLogic
+{
+    NSMutableArray *recUsers = [[NSMutableArray alloc]init];
+    dispatch_async(dispatch_get_global_queue( DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+        for(NSString *val in markedMemorize)
+        {
+            [recUsers addObject:val];
+        }  
+        dispatch_sync(dispatch_get_main_queue(), ^{
+            [self sendLogicHelper:recUsers];
+            [recUsers release];  
+        });
+    });       
+
+}
+
+-(void) dialogDidComplete:(FBDialog *)dialog{
+
+    NSInteger markedCount = [markedMemorize count];
+    if(markedCount != 0)
+    {   
+        [self sendLogic];
+    }
+    else
+    {
+        HolidayAppDelegate *appDelegate = (HolidayAppDelegate *)[[UIApplication sharedApplication] delegate];
+        appDelegate.tabBarController.selectedIndex=2;
+    }
+   
+}
+
+- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
+{    
+    if(alertView.tag == 1)
+    {
+        if(buttonIndex == 0)
+        {
+            HolidayAppDelegate *appDelegate = (HolidayAppDelegate *)[[UIApplication sharedApplication] delegate];
+            [appDelegate.kalVC clearTable];
+            [appDelegate.kalVC reloadData];
+            [appDelegate.kalVC redrawEntireMonth];
+            [appDelegate.kalVC showAndSelectDate:[NSDate date]];
+            appDelegate.tabBarController.selectedIndex=2;
+        }
+    }
+    else if(alertView.tag == 2){
+        
+        if(buttonIndex == 0)
+        {
+            Reachability* wifiReach = [Reachability reachabilityWithHostName: @"www.facebook.com"];
+            NetworkStatus netStatus =
+            [wifiReach currentReachabilityStatus];
+            if(netStatus == ReachableViaWWAN)
+            {
+                netStatus = NotReachable;
+            }
+            
+            if (netStatus != NotReachable)
+            {
+                [self getUserFriends];
+            }
+            else{
+                NSString* mes=@"There is no Internet connectivity.";
+                UIAlertView *alert=[[UIAlertView alloc] initWithTitle:@"" message:mes delegate:self cancelButtonTitle:@"Ok" otherButtonTitles:nil, nil];
+                [alert show];
+                [alert release];
+                tapCount=0;
+                return;
+
+            }
+        }
+    }
+}
+
+-(void) viewWillAppear:(BOOL)animated {
+    UIView *viewToRemove = nil;
+	for (UIView *v in [self.view subviews]) {
+		if ([v isKindOfClass:[MBProgressHUD class]]) {
+			viewToRemove = v;
+		}
+	}
+    
+    if (viewToRemove != nil) {
+		MBProgressHUD *HUD = (MBProgressHUD *)viewToRemove;
+        HUD.minShowTime = 0;
+		HUD.removeFromSuperViewOnHide = YES;
+		[HUD hide:animated];
+    }
+        
+    [self.navigationController setNavigationBarHidden:NO animated:NO];
+    UIImage *backgroundImage = [UIImage imageNamed:@"AddC"];
+    if ([self.navigationController.navigationBar respondsToSelector:@selector(setBackgroundImage:forBarMetrics:)])
+    {
+        [self.navigationController.navigationBar setBackgroundImage:backgroundImage forBarMetrics:UIBarMetricsDefault];
+    }
+    else{
+        [[self.navigationController navigationBar] setBackgroundImage:backgroundImage withTag:8675311];
+    }
+}
+
+-(void) viewWillDisappear:(BOOL)animated {
+   // HolidayAppDelegate *appDelegate = (HolidayAppDelegate *)[[UIApplication sharedApplication] delegate];
+    //[appDelegate startNotifications];
+    
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:@"FBDidLogin" object:nil];
+    [[self.navigationController navigationBar] resetBackground:8765311];
+}
+
+- (void)viewDidUnload
+{
+    [super viewDidUnload];
+    // Release any retained subviews of the main view.
+    // e.g. self.myOutlet = nil;
+}
+
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
+{
+    // Return YES for supported orientations
+    return (interfaceOrientation == UIInterfaceOrientationPortrait);
+}
+#pragma mark - Table view data source
+
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
+{
+    return 2;
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    NSInteger rowCount = 0;
+    if(section == SECTION_ADD){
+        rowCount = 3;
+    }else if(section == SECTION_MANAGE){
+        rowCount = 1;
+    }
+    return rowCount;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    static NSString *CellIdentifier = @"Cell";
+    
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+    
+    if (cell == nil) {
+        cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier] autorelease];
+    }
+    NSString *text = nil;
+    if(indexPath.section == SECTION_ADD)
+    {
+        if(indexPath.row == ADD_ROW_FB){
+            text=@"From Facebook";
+        }else if(indexPath.row == ADD_ROW_CON){
+            text=@"From Contacts";
+        }else{
+            text=@"Custom Birthday";
+        }
+    }
+    else if(indexPath.section == SECTION_MANAGE){
+        text=@"Manage Birthdays";
+    }
+    cell.textLabel.font = [UIFont systemFontOfSize:16];
+
+    cell.textLabel.text = text;
+    cell.textLabel.textColor=[UIColor colorWithRed:92.0/255 green:72.0/255 blue:22.0/255 alpha:1.0];
+    cell.textLabel.backgroundColor = [UIColor clearColor];
+    //cell.backgroundColor = [UIColor colorWithPatternImage:[UIImage imageNamed:@"ResetButton.png"]];
+    cell.backgroundView = [[[UIImageView alloc] initWithImage:[UIImage imageNamed:@"ResetButton.png"]] autorelease];
+    //cell.selectionStyle=UITableViewCellSelectionStyleNone;
+    cell.selectedBackgroundView = [[[UIImageView alloc] initWithImage:[UIImage imageNamed:@"ResetButton_Selected.png"]] autorelease];
+    cell.textLabel.highlightedTextColor = [UIColor colorWithRed:92.0/255 green:72.0/255 blue:22.0/255 alpha:1.0];
+
+    return cell;
+}
+
+- (CGFloat) tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
+{
+	return 44.0;
+}
+
+- (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
+{
+	// create the parent view that will hold header Label
+	UIView* customView = [[[UIView alloc] initWithFrame:CGRectMake(10.0, 0.0, 300.0, 44.0)]autorelease];
+	// create the button object
+	UILabel * headerLabel = [[UILabel alloc] initWithFrame:CGRectZero];
+	headerLabel.backgroundColor = [UIColor clearColor];
+	headerLabel.opaque = NO;
+	headerLabel.textColor = [UIColor colorWithRed:92.0/255 green:72.0/255 blue:22.0/255 alpha:1.0];
+	headerLabel.highlightedTextColor = [UIColor whiteColor];
+	headerLabel.font = [UIFont boldSystemFontOfSize:17];
+	headerLabel.frame = CGRectMake(10.0, 0.0, 300.0, 44.0);
+    
+	// If you want to align the header text as centered
+	// headerLabel.frame = CGRectMake(150.0, 0.0, 300.0, 44.0);
+    NSString *text=nil;
+    if(section == SECTION_ADD)
+         text=@"Add Friends' Birthdays";
+    else
+        text= @"Manage";
+	headerLabel.text = text; // i.e. array element
+	[customView addSubview:headerLabel];
+    [headerLabel release];
+    
+	return customView;
+}
+#pragma mark - Table view delegate
+
+
+- (void)getContacts:(NSMutableArray *)ff
+{
+    MBProgressHUD *hud = [MBProgressHUD showHUDAddedTo:self.view animated:YES];
+    hud.minShowTime = 2;
+    hud.labelText = @"Reading contacts...";
+    dispatch_async(dispatch_get_global_queue( DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+        [self readAddressBook];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [MBProgressHUD hideHUDForView:self.view animated:YES];
+            //NSMutableArray *ff = [dataModel fetchContactsRecords];
+            ContactsViewController *conVC =
+            [[ContactsViewController alloc]initWithContacts:ff];
+            [self.navigationController pushViewController:conVC animated:YES];
+            [conVC release];
+        });
+    });
+}
+
+- (void)fromContacts
+{
+    NSMutableArray *ff = [dataModel fetchContactsRecords];
+    
+    if([ff count] == 0)
+    {
+        [self getContacts:ff];       
+    }
+    else
+    {
+        ContactsViewController *conVC =
+        [[ContactsViewController alloc]initWithContacts:ff];
+        [self.navigationController pushViewController:conVC animated:YES];
+        [conVC release];
+        
+        //[dataModel deleteAllObjects:@"ContactsData"];
+        //[self getContacts:ff];       
+        
+    }
+}
+
+
+- (void) tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+   // UITableViewCell *cell = [tableView cellForRowAtIndexPath:indexPath];
+    
+    //cell.backgroundView = [[[UIImageView alloc] initWithImage:[UIImage imageNamed:@"ResetButton_Selected.png"]] autorelease];
+    
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    
+    if(indexPath.section == SECTION_ADD)
+    {
+        if (indexPath.row == ADD_ROW_FB)
+        {
+            tapCount++;
+            Reachability* wifiReach = [Reachability reachabilityWithHostName: @"www.facebook.com"];
+            NetworkStatus netStatus =
+                                    [wifiReach currentReachabilityStatus];
+            if(netStatus == ReachableViaWWAN)
+            {
+                netStatus = NotReachable;
+            }
+
+            if (netStatus != NotReachable)
+            {
+                if(tapCount == 1)
+                {
+                    [self getUserFriends];
+                }
+                HolidayAppDelegate *appDelegate = (HolidayAppDelegate *)[[UIApplication sharedApplication] delegate];
+                [appDelegate.kalVC clearTable];
+                [appDelegate.kalVC redrawEntireMonth];
+            }
+            else{
+                NSString* mes=@"There is no Internet connectivity.";
+                UIAlertView *alert=[[UIAlertView alloc] initWithTitle:@"" message:mes delegate:self cancelButtonTitle:@"Ok" otherButtonTitles:nil, nil];
+                [alert show];
+                [alert release];
+                tapCount = 0;
+                return;
+            }
+        }
+        else if(indexPath.row == ADD_ROW_CON)
+        {   
+#ifdef FROM_CONTACTS
+            [self fromContacts];
+#else
+            NSString* mes=@"We're working on upgrading this feature. Stay tuned for updates!";
+            UIAlertView *alert=[[UIAlertView alloc] initWithTitle:@"Coming Soon" message:mes delegate:self cancelButtonTitle:@"Ok" otherButtonTitles:nil, nil];
+            [alert show];
+            [alert release];
+#endif
+        }
+        else
+        {
+            EditBirthdayViewController *mBirthdayVC =[[EditBirthdayViewController alloc]initWithAddController:TRUE:dataModel:managedObjectContext];
+            [self.navigationController pushViewController:mBirthdayVC animated:YES];
+            [mBirthdayVC release];
+        }
+    }
+    if(indexPath.section == SECTION_MANAGE)
+    {
+        if(indexPath.row == 0)
+        {
+            ManageBirthdayViewController *mBirthdayVC=[[ManageBirthdayViewController alloc]initWithNibName:@"ManageBirthdayViewController" bundle:nil];
+            [self.navigationController pushViewController:mBirthdayVC animated:YES];
+            [mBirthdayVC release];
+            
+            //NSLog(@"Manage existing birthdays");
+        }
+    }
+}
+
+
+- (NSString*)getUserPhone:(ABRecordRef)ref
+{
+    NSString *phoneNumber = nil;
+    ABMultiValueRef phones = ABRecordCopyValue(ref, kABPersonPhoneProperty);
+    for(CFIndex j = 0; j < ABMultiValueGetCount(phones); j++)
+    {
+        CFStringRef phoneNumberRef = ABMultiValueCopyValueAtIndex(phones, j);
+        phoneNumber = (NSString *)phoneNumberRef;
+        CFRelease(phoneNumberRef);
+        break;
+    }
+    CFRelease(phones);
+    return phoneNumber;
+}
+
+- (NSString *)getPersonName:(NSString *)lastName firstName:(NSString *)firstName
+{
+    NSString* personName = nil;
+    if(firstName != nil)
+    {
+        personName = [firstName stringByAppendingString:@" "];
+        if(lastName != nil)
+        {
+            personName = [personName stringByAppendingString:lastName];
+        }
+    } 
+    else 
+    {
+        if(lastName != nil)
+        {
+            personName = [@"" stringByAppendingString:lastName];
+        }
+    }
+    return personName;
+}
+
+-(void) readAddressBook
+{
+    ABAddressBookRef addressBook = ABAddressBookCreate();
+    CFArrayRef all = ABAddressBookCopyArrayOfAllPeople(addressBook);
+    CFIndex personCount = ABAddressBookGetPersonCount(addressBook);
+    
+    for(int i = 0 ; i < personCount ; i++)
+    {
+        ABRecordRef ref = CFArrayGetValueAtIndex(all, i);
+        NSString *firstName = (NSString *)ABRecordCopyValue(ref, kABPersonFirstNameProperty);
+        NSString *lastName = (NSString *)ABRecordCopyValue(ref, kABPersonLastNameProperty);
+        NSDate *birthday =(NSDate*)ABRecordCopyValue(ref,kABPersonBirthdayProperty);
+        NSData *personPhoto=(NSData*)ABPersonCopyImageDataWithFormat(ref,kABPersonImageFormatThumbnail);
+        
+        NSString *stringFromDate=nil;
+        if(birthday != nil)
+        {
+            stringFromDate=[NSDate stringFromDate:birthday withFormat:@"yyyy-MM-dd"];
+        }
+        [birthday release];
+
+        NSString *personName = [self getPersonName:lastName firstName:firstName];
+        NSString *phoneNumber =  [self getUserPhone:ref];
+        
+        NSNumber *numberID=[NSNumber numberWithInt:i];
+        NSNumber *numberChecked=[NSNumber numberWithInt:1]; 
+        
+        if(personName != nil && phoneNumber != nil)
+        {
+            [dataModel saveContactsToModel:numberID:personName:phoneNumber:numberChecked];
+        }
+               
+        if(stringFromDate != nil && personPhoto != nil)
+        {
+            NSString* numberIDString=[numberID stringValue];
+            [dataModel saveUserToModel:numberIDString:personName:stringFromDate:@"":personPhoto];
+        }
+        [personPhoto release];
+        [lastName release];
+        [firstName release];
+    }
+    CFRelease(all);
+    CFRelease(addressBook);
+    [dataModel savingContext];
+}
+
+
+-(void)dealloc
+{
+    [_tableViewMain release];
+    [dataModel release];
+    [managedObjectContext release];
+    [markedMemorize release];
+    [mapOfUsers release];
+    [super dealloc];
+}
+@end

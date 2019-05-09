@@ -1,0 +1,711 @@
+﻿using ClearSlideLibrary.Dom;
+using DocumentFormat.OpenXml;
+using DocumentFormat.OpenXml.Presentation;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Text.RegularExpressions;
+using Microsoft.Office.Interop.PowerPoint;
+
+namespace ClearSlideLibrary.Animations
+{
+    public class JSONGenerator
+    {
+        public PPTSlide Slide { get; set; }
+
+        public JSONGenerator(PPTSlide slide)
+        {
+            this.Slide = slide;
+        }
+
+        public JSONGenerator(List<PPTSlide> slides)
+        {
+            this.Slide = slides.ElementAt(0); //TODO: add support for more than one slide
+        }
+
+        public string GetAnimaVariable()
+        {
+            return "var anima = " + GetAnimationsJSON() + ";";
+        }
+
+        /*
+         * Fix the timing for animations that need to start without a click. Make the tree simpler by removing nodes that are empty or nested.
+         * 
+         * When a node has a start type != ClickEffect , we add the Animations from this timenode to the animations list in the previous time node.
+         * If it is type After the previous one we need to set Delay = Length of the previous one. 
+         * 
+         * Removing nested nodes:
+         * Example 1: Node -> Node -> Node  - every node has a single child. In this case we can create one time node with the timing for both. 
+         * Example 2: We have only one node (one simple animation) and all the other are nested (inner animations) - we remove the parent time node and 
+         * add its timing to the timing of the nested animations.
+         * 
+         */
+
+        private List<IAnimation> fixAnimationTimings(List<IAnimation> animations)
+        {
+            animations = fixNestedAnimations(animations);
+
+
+            List<IAnimation> result = new List<IAnimation>();
+            if (animations == null || animations.Count == 0)
+                return result;
+            //If we have only one animation and all the others are nested  - add the delay to the inner animations and remove this one.
+            if (animations.Count == 1 && animations[0].InnerAnimations != null && animations[0].InnerAnimations.Count > 0)
+            {
+                foreach (IAnimation anim in animations[0].InnerAnimations)
+                    anim.Start += animations[0].Start;
+                return fixAnimationTimings(animations[0].InnerAnimations);
+            }
+            IAnimation previousAnimation = null;
+            foreach (IAnimation animation in animations)
+            {
+                SimpleAnimation sAnimation = (SimpleAnimation)animation;
+                if (previousAnimation == null)
+                {
+                    previousAnimation = sAnimation;
+                    continue;
+                }
+               //These are the cases where animation starts without a click. There migth be other cases which are not handled yet.
+                else if (sAnimation.timingType.HasValue && (
+                        TimeNodeValues.WithEffect.Equals(sAnimation.timingType.Value) ||
+                        TimeNodeValues.AfterEffect.Equals(sAnimation.timingType.Value) ||
+                        TimeNodeValues.WithGroup.Equals(sAnimation.timingType.Value) ||
+                        TimeNodeValues.AfterGroup.Equals(sAnimation.timingType.Value)))
+                {
+                    int newLenegth = 0;
+                    if (TimeNodeValues.AfterEffect.Equals(sAnimation.timingType.Value) ||
+                        TimeNodeValues.AfterGroup.Equals(sAnimation.timingType.Value))
+                    {
+                        /*If animation is a part of a group then it has delay according to the start of the parent time node (animation). 
+                         * In this case we use this delay because it is the proper way power point handles such animations. 
+                         * If by some reason there isn't such delay and the animation type is set to 'After' previous
+                         * we set the start point to right after the previous animation ends." */
+
+                        if (sAnimation.Start <= previousAnimation.Length + previousAnimation.Start) 
+                            sAnimation.Start = previousAnimation.Length + previousAnimation.Start;                      
+                        if (sAnimation.InnerAnimations != null)
+                            foreach (IAnimation anim in sAnimation.InnerAnimations)
+                                anim.Start = anim.Start + sAnimation.Start;
+                        newLenegth = sAnimation.Length + sAnimation.Start;
+                    }
+                    else
+                    {
+                        newLenegth = (sAnimation.Length + sAnimation.Start >
+                                           previousAnimation.Length + previousAnimation.Start)
+                                              ? sAnimation.Length + sAnimation.Start
+                                              : previousAnimation.Length + previousAnimation.Start;
+                    }
+
+                    /*Joins the current animation and the previous one and recalculates the length*/
+                    if (previousAnimation.InnerAnimations != null && previousAnimation.InnerAnimations.Count > 0)
+                    {
+
+                        previousAnimation.Length = newLenegth;
+                        if (sAnimation.InnerAnimations == null || sAnimation.InnerAnimations.Count == 0)
+                            previousAnimation.InnerAnimations.Add(sAnimation);
+                        else
+                            previousAnimation.InnerAnimations.AddRange(sAnimation.InnerAnimations);
+                        continue;
+                    }
+                    else
+                    {
+                        SimpleAnimation tempAnimation = new SimpleAnimation();
+                        tempAnimation.Length = newLenegth;
+                        tempAnimation.timingType = ((SimpleAnimation)previousAnimation).timingType;
+                        tempAnimation.InnerAnimations = new List<IAnimation>();
+
+                        if (previousAnimation.InnerAnimations == null || previousAnimation.InnerAnimations.Count == 0)
+                            tempAnimation.InnerAnimations.Add(previousAnimation);
+                        else
+                            tempAnimation.InnerAnimations.AddRange(previousAnimation.InnerAnimations);
+
+                        if (sAnimation.InnerAnimations == null || sAnimation.InnerAnimations.Count == 0)
+                            tempAnimation.InnerAnimations.Add(sAnimation);
+                        else
+                            tempAnimation.InnerAnimations.AddRange(sAnimation.InnerAnimations);
+                        previousAnimation = tempAnimation;
+                        continue;
+                    }
+                }
+                result.Add(previousAnimation);
+                previousAnimation = sAnimation;
+            }
+            result.Add(previousAnimation);
+            return result;
+        }
+
+        
+        /* 
+         * When the animation has only one inner animation then return the inner animation. Do this recursive until we get the real one.          
+         */
+        private IAnimation getAnimationFromNested(IAnimation sAnimation)
+        {
+            if (sAnimation.InnerAnimations != null && sAnimation.InnerAnimations.Count == 1)
+            {
+                sAnimation.InnerAnimations[0].Start += sAnimation.Start;
+                return getAnimationFromNested(sAnimation.InnerAnimations[0]);
+            }
+            if (((SimpleAnimation)sAnimation).timingType == null && sAnimation.InnerAnimations != null)
+                ((SimpleAnimation)sAnimation).timingType = ((SimpleAnimation)getAnimationFromNested(sAnimation.InnerAnimations[0])).timingType;
+            return sAnimation;
+        }
+
+
+        /*         
+         * Generating the JSON for the animations for one slide only. It has some support for nested animations but not everything works.                    
+         */
+
+        public string GetAnimationsJSON()
+        {
+            if (Slide == null)
+            {
+                return "{s1:{t:{i:1000,c:1,v:0,n:0},g:0,a:0,f:0,c:0}}";
+            }
+            String result = "";
+
+            int animations = 0;
+
+            List<IAnimation> fixedAnimations = fixAnimationTimings(Slide.Animations);
+            animations = fixedAnimations.Count;
+
+            if (Slide.Transition == null)
+            {
+                result = "{s1:{t:{i:0,c:1,v:0,n:0},g:0,a:0,f:0,c:##ANIMATIONS_PLACEHOLDER##}}";
+            }
+            else
+            {
+                result = "{s1:{t:{i:" + (Slide.Transition.Length + Slide.Transition.Start) +
+                         ",c:" + Slide.Transition.GetJsonString() + "},g:0,a:0,f:0,c:##ANIMATIONS_PLACEHOLDER##}}";
+            }
+            if (animations == 0)
+            {
+                result = result.Replace("##ANIMATIONS_PLACEHOLDER##", "0");
+                return result;
+            }
+
+
+            SimpleAnimation checkEffectFirstAnim = (SimpleAnimation)fixedAnimations[0];
+            if (checkEffectFirstAnim.timingType.HasValue && checkEffectFirstAnim.timingType.Value != TimeNodeValues.ClickEffect)
+            {
+                result = result.Replace("n:0", "n:1");
+                //If it is just one Animation we change this in the transition! - the transition is like the first Animation!
+            }
+
+
+            string animationsString = "{i:" + animations + getAnimationsString(fixedAnimations, true) + "}";
+
+
+
+
+            result = result.Replace("##ANIMATIONS_PLACEHOLDER##", animationsString);
+
+            return result;
+        }
+
+
+        /*
+         * Generate JSON for animation tree. Recursive going into the tree - there is some difference in the animation string 
+         * for the first level and the next levels.         
+         */
+
+        private string getAnimationsString(List<IAnimation> animations, bool firstLevel)
+        {
+            String animationList = "";
+            int index = 0;
+            foreach (IAnimation animation in animations)
+            {
+                if (animation.InnerAnimations == null || animation.InnerAnimations.Count == 0)
+                {
+                    if (!firstLevel)
+                        animationList = animationList + ",c" + index++ + ":" + animation.GetJsonString();
+                    else
+                        animationList = animationList + ",c" + index++ + ":{i:" + (((SimpleAnimation)animation).getCalculatedLength() + animation.Start) + ",c0:" + animation.GetJsonString() + "}";
+                }
+                else
+                // Nested animatons (several animations in one time node, or in different time nodes that start together!
+                {
+                    String innerAnimationsString = getAnimationsString(animation.InnerAnimations, false);
+
+                    animationList = animationList + ",c" + index++ + ":{i:" + (((SimpleAnimation)animation).getCalculatedLength() + animation.Start) +
+                                    innerAnimationsString + "}";
+                }
+            }
+            return animationList;
+        }
+
+        public static IAnimation GenerateTransitionAnimationObject(Transition trans)
+        {
+            if (trans == null || trans.FirstChild == null)
+                return null;
+            TransitionAnimation result = new TransitionAnimation();
+            if (trans.Speed != null && TransitionSpeedValues.Fast.Equals(trans.Speed.Value))
+                result.Length = 500;
+            else if (trans.Speed != null && TransitionSpeedValues.Slow.Equals(trans.Speed.Value))
+                result.Length = 2000;
+            else if (trans.Duration != null)
+                result.Length = int.Parse(trans.Duration.Value);
+            else
+                result.Length = 1000;
+
+            result.Start = 0;
+            result.InitialState = -1;
+            result.Repetitions = 1;
+            if (trans.AdvanceOnClick != null)
+                result.AdvanceOnClick = trans.AdvanceOnClick.Value;
+            else result.AdvanceOnClick = true;
+
+            if (typeof(StripsTransition) == trans.FirstChild.GetType())
+            {
+                StripsTransition transition = (StripsTransition)trans.FirstChild;
+                result.Type = AnimationTypes.Strips;
+                if (transition.Direction != null &&
+                    TransitionCornerDirectionValues.RightUp.Equals(transition.Direction.Value))
+                    result.AdditionalData = "7";
+                else if (transition.Direction != null &&
+                         TransitionCornerDirectionValues.LeftDown.Equals(transition.Direction.Value))
+                    result.AdditionalData = "9";
+                else if (transition.Direction != null &&
+                         TransitionCornerDirectionValues.RightDown.Equals(transition.Direction.Value))
+                    result.AdditionalData = "8";
+                else
+                    result.AdditionalData = "6";
+            }
+            else if (typeof(PushTransition) == trans.FirstChild.GetType())
+            {
+                PushTransition transition = (PushTransition)trans.FirstChild;
+                result.Type = AnimationTypes.Push;
+                if (transition.Direction != null &&
+                    TransitionSlideDirectionValues.Right.Equals(transition.Direction.Value))
+                    result.AdditionalData = "3";
+                else if (transition.Direction != null &&
+                         TransitionSlideDirectionValues.Up.Equals(transition.Direction.Value))
+                    result.AdditionalData = "4";
+                else if (transition.Direction != null &&
+                         TransitionSlideDirectionValues.Left.Equals(transition.Direction.Value))
+                    result.AdditionalData = "2";
+                else result.AdditionalData = "1";
+            }
+            else if (typeof(WipeTransition) == trans.FirstChild.GetType())
+            {
+                WipeTransition transition = (WipeTransition)trans.FirstChild;
+                result.Type = AnimationTypes.Wipe;
+                if (transition.Direction != null &&
+                    TransitionSlideDirectionValues.Right.Equals(transition.Direction.Value))
+                    result.AdditionalData = "4";
+                else if (transition.Direction != null &&
+                         TransitionSlideDirectionValues.Up.Equals(transition.Direction.Value))
+                    result.AdditionalData = "3";
+                else if (transition.Direction != null &&
+                         TransitionSlideDirectionValues.Left.Equals(transition.Direction.Value))
+                    result.AdditionalData = "2";
+                else result.AdditionalData = "1";
+            }
+            else if (typeof(FadeTransition) == trans.FirstChild.GetType())
+            {
+                FadeTransition transition = (FadeTransition)trans.FirstChild;
+                result.Type = AnimationTypes.Fade;
+                if (transition.ThroughBlack != null && transition.ThroughBlack.Value)
+                    result.Type = AnimationTypes.FadeThroughBlack;
+                result.AdditionalData = "1";
+            }
+            else if (typeof(CutTransition) == trans.FirstChild.GetType())
+            {
+                CutTransition transition = (CutTransition)trans.FirstChild;
+                result.Type = AnimationTypes.Cut;
+                result.AdditionalData = "2";
+                if (transition.ThroughBlack != null && transition.ThroughBlack.Value)
+                {
+                    result.Type = AnimationTypes.CutThroughBlack;
+                    result.AdditionalData = "3";
+                }
+            }
+            else if (typeof(DissolveTransition) == trans.FirstChild.GetType())
+            {
+                result.Type = AnimationTypes.DissolveIn;
+                result.AdditionalData = "1";
+            }
+            else if (typeof(WedgeTransition) == trans.FirstChild.GetType())
+            {
+                result.Type = AnimationTypes.Wedge;
+                result.AdditionalData = "1";
+            }
+            else if (typeof(PullTransition) == trans.FirstChild.GetType())
+            {
+                PullTransition transition = (PullTransition)trans.FirstChild;
+                result.Type = AnimationTypes.UnCover;
+                if (transition.Direction != null && "d".Equals(transition.Direction.Value.ToString()))
+                    result.AdditionalData = "9";
+                else if (transition.Direction != null && "r".Equals(transition.Direction.Value.ToString()))
+                    result.AdditionalData = "11";
+                else if (transition.Direction != null && "u".Equals(transition.Direction.Value.ToString()))
+                    result.AdditionalData = "12";
+                else if (transition.Direction != null && "ld".Equals(transition.Direction.Value.ToString()))
+                    result.AdditionalData = "13";
+                else if (transition.Direction != null && "lu".Equals(transition.Direction.Value.ToString()))
+                    result.AdditionalData = "14";
+                else if (transition.Direction != null && "rd".Equals(transition.Direction.Value.ToString()))
+                    result.AdditionalData = "15";
+                else if (transition.Direction != null && "ru".Equals(transition.Direction.Value.ToString()))
+                    result.AdditionalData = "16";
+                else result.AdditionalData = "10";
+            }
+            else if (typeof(ZoomTransition) == trans.FirstChild.GetType())
+            {
+                ZoomTransition transition = (ZoomTransition)trans.FirstChild;
+                result.Type = AnimationTypes.Box;
+                if (transition.Direction != null && TransitionInOutDirectionValues.In == transition.Direction.Value)
+                    result.AdditionalData = "19";
+                else result.AdditionalData = "20";
+            }
+            else if (typeof(ZoomTransition) == trans.FirstChild.GetType())
+            {
+                ZoomTransition transition = (ZoomTransition)trans.FirstChild;
+                result.Type = AnimationTypes.Box;
+                if (transition.Direction != null && TransitionInOutDirectionValues.In == transition.Direction.Value)
+                    result.AdditionalData = "19";
+                else result.AdditionalData = "20";
+            }
+            else if (typeof(WheelTransition) == trans.FirstChild.GetType())
+            {
+                WheelTransition transition = (WheelTransition)trans.FirstChild;
+                result.Type = AnimationTypes.Wheel;
+                if (transition.Spokes != null && transition.Spokes.Value == 1)
+                    result.AdditionalData = "1";
+                else if (transition.Spokes != null && transition.Spokes.Value == 2)
+                    result.AdditionalData = "2";
+                else if (transition.Spokes != null && transition.Spokes.Value == 3)
+                    result.AdditionalData = "3";
+                else if (transition.Spokes != null && transition.Spokes.Value == 8)
+                    result.AdditionalData = "8";
+                else result.AdditionalData = "4";
+            }
+            else if (typeof(SplitTransition) == trans.FirstChild.GetType())
+            {
+                SplitTransition transition = (SplitTransition)trans.FirstChild;
+                result.Type = AnimationTypes.Split;
+                if (transition.Direction != null && TransitionInOutDirectionValues.In == transition.Direction.Value)
+                {
+                    if (transition.Orientation != null && DirectionValues.Vertical.Equals(transition.Orientation.Value))
+                        result.AdditionalData = "25";
+                    else
+                        result.AdditionalData = "23";
+                }
+                else
+                {
+                    if (transition.Orientation != null && DirectionValues.Vertical.Equals(transition.Orientation.Value))
+                        result.AdditionalData = "26";
+                    else
+                        result.AdditionalData = "24";
+                }
+            }
+            else if (typeof(CircleTransition) == trans.FirstChild.GetType())
+            {
+                result.Type = AnimationTypes.Circle;
+                result.AdditionalData = "20";
+            }
+            else if (typeof(DiamondTransition) == trans.FirstChild.GetType())
+            {
+                result.Type = AnimationTypes.Diamond;
+                result.AdditionalData = "20";
+            }
+            else if (typeof(PlusTransition) == trans.FirstChild.GetType())
+            {
+                result.Type = AnimationTypes.Plus;
+                result.AdditionalData = "20";
+            }
+            else if (typeof(NewsflashTransition) == trans.FirstChild.GetType())
+            {
+                result.Type = AnimationTypes.Newsflash;
+                result.AdditionalData = "20";
+            }
+            return result;
+        }
+
+
+        public SimpleAnimation getSimpleAnimationFromCommonTimeNodePreset(CommonTimeNode commonTimeNode)
+        {
+            SimpleAnimation result = new SimpleAnimation();
+            if (AnimationTypes.TypePath.Equals(commonTimeNode.PresetClass))
+            {
+                return new MotionPathAnimation(commonTimeNode, Slide.slideIndex);
+            }
+            else if (AnimationTypes.TypeEntrance.Equals(commonTimeNode.PresetClass))
+            {
+                result.InitialState = 1;
+            }
+            else if (AnimationTypes.TypeExit.Equals(commonTimeNode.PresetClass))
+            {
+                result.InitialState = 2;
+            }
+            else if (AnimationTypes.TypeEmphasis.Equals(commonTimeNode.PresetClass))
+            {
+                result.InitialState = 3;
+            }
+            else return null;
+            if (commonTimeNode.PresetId == null)
+                return null;
+            result.timingType = commonTimeNode.NodeType;
+
+            //Get the speed from one of the nodes common behavior. Hopefully all nodes have the same speed (since the animation is the same).
+            foreach (Object xmlEl in commonTimeNode.Descendants())
+                if (xmlEl.GetType().Equals(typeof(CommonBehavior)))
+                {
+                    CommonBehavior bhvr = ((CommonBehavior)xmlEl);
+
+                    if (bhvr.CommonTimeNode != null)
+                    {
+                        result.FixAnimationTimings(bhvr, Slide.slideIndex);
+                        if (result.Length <= 1)
+                            continue;
+                        if (result.Start == 0)
+                        {
+                            Condition condition = commonTimeNode.StartConditionList.FirstChild as Condition;
+                            if (!condition.Delay.Equals("indefinite"))
+                                result.Start = int.Parse(condition.Delay);
+                        }
+                        break;
+                    }
+                }
+            if (result.Length <= 1)
+                result.Length = 100;  //Default value??
+            if (AnimationTypes.TypeEmphasis.Equals(commonTimeNode.PresetClass))
+                result = handleEmphasisAnimation(commonTimeNode, result);
+            else
+                result = handleEntranceAnimation(commonTimeNode, result);
+
+
+            if (result.AdditionalData == null || result.AdditionalData == "0") //There are default values. Horizontal In = horizontal + in ;)
+                switch (commonTimeNode.PresetSubtype.Value)
+                {
+                    case 0: result.AdditionalData = "0"; break;
+                    case 4: result.AdditionalData = "3"; break;   //From bottom
+                    case 2: result.AdditionalData = "2"; break;   //From right
+                    case 1: result.AdditionalData = "1"; break;   //From top
+                    case 8: result.AdditionalData = "4"; break;   //From left
+                    case 6: result.AdditionalData = "8"; break;  //Bottom right
+                    case 3: result.AdditionalData = "7"; break;  //Top right
+                    case 9: result.AdditionalData = "6"; break;  //Top right
+                    case 12: result.AdditionalData = "9"; break;  //Bottom left
+                    case 10: result.AdditionalData = "16"; break;  //Horizontal
+                    case 5: result.AdditionalData = "17"; break;   //Vertical
+                    case 26: result.AdditionalData = "23"; break;   //Horizontal in
+                    case 42: result.AdditionalData = "24"; break;   //Horizontal out
+                    case 21: result.AdditionalData = "25"; break;   //Vertical in
+                    case 37: result.AdditionalData = "26"; break;   //Vertical out       
+                    case 16: result.AdditionalData = "19"; break;   //in    
+                    case 32: result.AdditionalData = "20"; break;   //out
+                }
+
+            checkIsText(result);
+            return result;
+        }
+
+        private void checkIsText(SimpleAnimation result)
+        {
+            int res;
+            bool isTextWithEffect = int.TryParse(result.ObjectId, out res) && PPTShape.effectShapes.Contains(Slide.slideIndex + "_" + res);
+
+            int tryParse = 0;
+            if (!int.TryParse(result.ObjectId, out tryParse) || isTextWithEffect) {
+                return;//if it is like 123p -> return;
+            }
+            
+            foreach (PPTShapeBase shape in Slide.ContainerShape.Elements)
+                if (typeof(PPTShape).Equals(shape.GetType()) && ((PPTShape)shape).IsText)
+                {
+                    string shapeId = shape.NonVisualShapeProp.Id;
+                    string shapeObjectId = "s1s" + result.ObjectId;
+                    if (shapeId.Equals(shapeObjectId))
+                    {
+                        result.ObjectId = result.ObjectId + "p0";// TODO check when multiple paragraphs
+                    }
+                }
+        }
+
+        private EmphasisAnimation handleEmphasisAnimation(CommonTimeNode commonTimeNode, SimpleAnimation simpleAnim)
+        {
+            EmphasisAnimation result = new EmphasisAnimation(simpleAnim);
+            result.setRgbColor(commonTimeNode, Slide);
+
+            switch (commonTimeNode.PresetId.Value)  //Presets for Entrance/Exit
+            {
+                case 3: result.Type = AnimationTypes.ChangeFontColor; break;
+                case 19: result.Type = AnimationTypes.ColorBlend; break;
+                case 14: result.Type = AnimationTypes.Blast; break;
+                case 26: result.Type = AnimationTypes.FlashBulb; break;
+                case 35: result.Type = AnimationTypes.Blink; break;
+                case 9:
+                    {
+                        result.Type = AnimationTypes.Transparency;
+                        result.Transparency = getTransparence(commonTimeNode);
+                    } break;
+                case 20:
+                    {
+                        result.Type = AnimationTypes.ColorWave;
+                        result.Length *= 2;
+                        result.e2 = result.Length / 10;
+                        result.e1 = 2;
+                    } break;
+                case 16:
+                    {
+                        result.Type = AnimationTypes.BrushOnColor;
+                        result.e2 = result.Length / 25;
+                        result.e1 = 2;
+                    } break;
+                case 33:
+                    {
+                        result.Type = AnimationTypes.VerticalHighlight;
+                        result.Length *= 2;
+                    } break;
+                case 27:
+                    {
+                        result.Type = AnimationTypes.Flicker;
+                        result.Length *= 2;
+                    } break;
+                case 36:
+                    {
+                        result.Type = AnimationTypes.Shimmer;
+                        result.e2 = result.Length / 5;
+                        result.Length *= 2;
+                        foreach (Object obj in commonTimeNode.Descendants())
+                            if (obj.GetType().Equals(typeof(AnimateScale)))
+                            {
+                                ((EmphasisAnimation)result).ScaleX = ((AnimateScale)obj).ToPosition.X.Value / 1000;
+                                ((EmphasisAnimation)result).ScaleY = ((AnimateScale)obj).ToPosition.Y.Value / 1000;
+                                break;
+                            }
+                    } break;
+                case 28:
+                    {
+                        result.Type = AnimationTypes.GrowwithColor;
+                        result.e2 = result.Length / 10;
+                        result.e1 = 2;
+                    } break;
+                case 32:
+                    {
+                        result.Type = AnimationTypes.Teeter;
+                        result.Length *= 2;
+                    } break;
+                case 34:
+                    {
+                        result.Type = AnimationTypes.Wave;
+                        result.e2 = result.Length / 5;
+                        result.Length *= 2;
+                    } break;
+                case 8:
+                    {
+                        result.Type = AnimationTypes.Spin;
+                        foreach (Object obj in commonTimeNode.Descendants())
+                            if (obj.GetType().Equals(typeof(AnimateRotation)))
+                            {
+                                ((EmphasisAnimation)result).RotationDegrees = ((AnimateRotation)obj).By / 60000;
+                                break;
+                            }
+                    } break;
+                case 6:
+                    {
+                        result.Type = AnimationTypes.GrowShrink;
+                        foreach (Object obj in commonTimeNode.Descendants())
+                            if (obj.GetType().Equals(typeof(AnimateScale)))
+                            {
+                                ((EmphasisAnimation)result).ScaleX = ((AnimateScale)obj).ByPosition.X.Value / 1000;
+                                ((EmphasisAnimation)result).ScaleY = ((AnimateScale)obj).ByPosition.Y.Value / 1000;
+                                break;
+                            }
+                    } break;
+                default: return null;
+            }
+
+            return result;
+        }
+
+        private SimpleAnimation handleEntranceAnimation(CommonTimeNode commonTimeNode, SimpleAnimation result)
+        {
+            switch (commonTimeNode.PresetId.Value)  //Presets for Entrance/Exit
+            {
+                case 1: result.Type = AnimationTypes.Appear; break;
+                case 54: result.Type = AnimationTypes.Glide; break;
+                case 19: result.Type = AnimationTypes.Swivel; break;
+                case 42: result.Type = AnimationTypes.Ascend; break;
+                case 3: result.Type = AnimationTypes.Blinds; break;
+                case 4: result.Type = AnimationTypes.Box; break;
+                case 25: result.Type = AnimationTypes.Boomerang; break;
+                case 43: result.Type = AnimationTypes.CenterRevolve; break;
+                case 5: result.Type = AnimationTypes.Checkerboard; break;
+                case 50: result.Type = AnimationTypes.Compress; break;
+                case 7: result.Type = AnimationTypes.TypeEntrance.Equals(commonTimeNode.PresetClass) ? AnimationTypes.CrawlIn : AnimationTypes.CrawlOut; break;
+                case 47: result.Type = AnimationTypes.Descend; break;
+                case 48: result.Type = AnimationTypes.Sling; break;
+                case 29: result.Type = AnimationTypes.TypeEntrance.Equals(commonTimeNode.PresetClass) ? AnimationTypes.EaseIn : AnimationTypes.EaseOut; break;
+                case 55: result.Type = AnimationTypes.TypeEntrance.Equals(commonTimeNode.PresetClass) ? AnimationTypes.Expand : AnimationTypes.Contract; break;
+                case 10: result.Type = AnimationTypes.Fade; break;
+                case 53: result.Type = AnimationTypes.FadedZoom; break;
+                case 11: result.Type = AnimationTypes.FlashOnce; break;
+                case 2: result.Type = AnimationTypes.TypeEntrance.Equals(commonTimeNode.PresetClass) ? AnimationTypes.FlyIn : AnimationTypes.FlyOut; break;
+                case 58: result.Type = AnimationTypes.Fold; break;
+                case 31: result.Type = AnimationTypes.GrowTurn; break;
+                case 12: result.Type = AnimationTypes.TypeEntrance.Equals(commonTimeNode.PresetClass) ? AnimationTypes.PeekIn : AnimationTypes.PeekOut; break;
+                case 16: result.Type = AnimationTypes.Split; break;
+                case 35: result.Type = AnimationTypes.Pinwheel; break;
+                case 14: result.Type = AnimationTypes.RandomBars; break;
+                case 37: result.Type = AnimationTypes.TypeEntrance.Equals(commonTimeNode.PresetClass) ? AnimationTypes.RiseUp : AnimationTypes.SinkDown; break;
+                case 49: result.Type = AnimationTypes.Spinner; break;
+                case 22: result.Type = AnimationTypes.Wipe; break;
+                case 18: result.Type = AnimationTypes.Strips; break;
+                case 26: result.Type = AnimationTypes.Bounce; result.Length = (int)((result.Length * 100) / 29); break;//time tunning
+                case 6: result.Type = AnimationTypes.Circle; break;
+                case 28: result.Type = AnimationTypes.Credits; break;
+                case 52: result.Type = AnimationTypes.TypeEntrance.Equals(commonTimeNode.PresetClass) ? AnimationTypes.CurveUp : AnimationTypes.CurveDown; break;
+                case 8: result.Type = AnimationTypes.Diamond; break;
+                case 9: result.Type = AnimationTypes.Dissolve; break;
+                case 30: result.Type = AnimationTypes.Float; break;
+                case 34: result.Type = AnimationTypes.LightSpeed; result.Length = (int)((result.Length * 5) / 3); break;//time tunning
+                case 51: result.Type = AnimationTypes.Magnify; result.Length = (int)((result.Length * 200) / 77); break;//time tunning
+                case 13: result.Type = AnimationTypes.Plus; break;
+                case 15: result.Type = AnimationTypes.TypeEntrance.Equals(commonTimeNode.PresetClass) ? AnimationTypes.SpiralIn : AnimationTypes.SpiralOut; break;
+                case 17: result.Type = AnimationTypes.Stretch; break;
+                case 39: result.Type = AnimationTypes.Thread; break;
+                case 20: result.Type = AnimationTypes.Wedge; break;
+                case 21: result.Type = AnimationTypes.Wheel; result.AdditionalData = "" + commonTimeNode.PresetSubtype.Value; break;
+                case 23: result.Type = AnimationTypes.Zoom; break;
+
+                default: return null;
+            }
+
+            return result;
+        }
+
+        private double getTransparence(CommonTimeNode commonTimeNode)
+        {
+            if (typeof(AnimateEffect) == commonTimeNode.LastChild.LastChild.GetType())
+            {
+                AnimateEffect animEffect = (AnimateEffect)commonTimeNode.LastChild.LastChild;
+                string value = animEffect.PropertyList.Value;
+                if (value != null && value.IndexOf("opacity:") != -1)
+                {
+                    string opacityStr = value.Substring(9);//we need 0.75 from "opacity: 0.75"
+                    double opacity = double.Parse(opacityStr,CultureInfo.GetCultureInfo("en-US").NumberFormat);
+                    return 1 - opacity;
+                }
+            }
+
+            return 0;
+        }
+
+        private List<IAnimation> fixNestedAnimations(List<IAnimation> animations)
+        {
+            if (animations == null || animations.Count == 0)
+                return null;
+            List<IAnimation> result = new List<IAnimation>();
+            foreach (IAnimation anim in animations)
+            {
+                IAnimation animation = getAnimationFromNested(anim);
+                animation.InnerAnimations = fixNestedAnimations(animation.InnerAnimations);
+                result.Add(animation);
+            }
+            return result;
+        }
+
+    }
+}

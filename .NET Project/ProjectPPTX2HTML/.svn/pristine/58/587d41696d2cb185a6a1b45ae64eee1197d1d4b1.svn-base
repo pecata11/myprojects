@@ -1,0 +1,96 @@
+﻿namespace ClearSlideLibrary.Animations
+{
+    internal class AnimationTypes
+    {
+        public const string FlyIn = "FlyIn";
+        public const string FlyOut = "FlyOut";
+        public const string Sling = "Sling";
+        public const string Appear = "Appear";
+        public const string Strips = "Strips";
+        public const string Blinds = "Blinds";
+        public const string Box = "Box";
+        public const string Glide = "Glide";
+        public const string Swivel = "Swivel";
+        public const string Ascend = "Ascend";
+        public const string Boomerang = "Boomerang";
+        public const string CenterRevolve = "CenterRevolve";
+        public const string Compress = "Compress";
+        public const string CrawlIn = "CrawlIn";
+        public const string CrawlOut = "CrawlOut";
+        
+        public const string Descend = "Descend";
+        public const string EaseIn = "EaseIn";
+        public const string EaseOut = "EaseOut";
+        public const string Expand = "Expand";
+        public const string Contract = "Contract";
+        public const string FadedZoom = "FadedZoom";
+        public const string FlashOnce = "FlashOnce";
+        public const string Fold = "Fold";
+        public const string GrowTurn = "GrowTurn";
+        public const string Pinwheel = "Pinwheel";
+        public const string RiseUp = "RiseUp";
+        public const string SinkDown = "SinkDown";
+        
+        public const string Spinner = "Spinner";
+        public const string Bounce = "Bounce";
+        public const string Credits = "Credits";
+        public const string CurveUp = "CurveUp";
+        public const string CurveDown = "CurveDown";
+        
+        public const string Dissolve = "Dissolve";
+        public const string Float = "Float";
+        public const string LightSpeed = "LightSpeed";
+        public const string Magnify = "Magnify";
+        public const string SpiralIn = "SpiralIn";
+        public const string SpiralOut = "SpiralOut";
+        public const string Stretch = "Stretch";
+        public const string Thread = "Thread";
+        public const string Wheel = "Wheel";
+        public const string Zoom = "Zoom";
+        public const string Spin = "Spin";
+        public const string GrowShrink = "GrowShrink"; 
+        
+  
+        
+        public const string Checkerboard = "Checkerboard";
+        public const string Circle = "Circle";
+        public const string Diamond = "Diamond";        
+        public const string Fade = "Fade";
+        public const string Plus = "Plus";
+        public const string Wipe = "Wipe";
+        public const string PeekOut = "PeekOut";
+        public const string PeekIn = "PeekIn";
+        public const string Split = "Split";
+        public const string Push = "Push";
+        public const string FadeThroughBlack = "FadeThroughBlack";
+        public const string Cut = "Cut";
+        public const string CutThroughBlack = "CutThroughBlack";
+        public const string DissolveIn = "DissolveIn";
+        public const string Wedge = "Wedge";
+        public const string UnCover = "UnCover";        
+        public const string Newsflash = "Newsflash";
+        public const string RandomBars = "RandomBars";
+        public const string MotionPath = "MotionPath";
+
+
+
+        public const string TypePath = "path";
+        public const string TypeEntrance = "entr";
+        public const string TypeExit = "exit";
+        public const string TypeEmphasis = "emph";
+        public const string ChangeFontColor = "ChangeFontColor";
+        public const string ColorWave = "ColorWave";
+        public const string ColorBlend = "ColorBlend";
+        public const string BrushOnColor = "BrushOnColor";
+        public const string Blast = "Blast";
+        public const string FlashBulb = "FlashBulb";
+        public const string Blink = "Blink";
+        public const string Transparency = "Transparency";
+        public const string VerticalHighlight = "VerticalHighlight";
+        public const string Flicker = "Flicker";
+        public const string Shimmer = "Shimmer";
+        public const string GrowwithColor = "GrowwithColor";
+        public const string Teeter = "Teeter";
+        public const string Wave = "Wave";
+    }
+}

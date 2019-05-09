@@ -1,0 +1,39 @@
+﻿namespace ClearSlideLibrary.Dom
+{
+    using System.Drawing;
+    using System.Drawing.Drawing2D;
+    using System.Drawing.Imaging;
+    using System.IO;
+
+    public static class Globals
+    {
+        // public const string ROOT_DIR = Path.GetDirectoryName(Path.GetDirectoryName(Environment.CurrentDirectory));
+        public const string STORAGE_DIR = "PictureExtracts";
+        public const string IMAGE_TO_SHAPE_MAPPING_FILE = "imageShapeMappingFile.txt";
+        public const int LEAST_COMMON_MULTIPLE_100_254 =12700; //8000;
+
+
+
+        public static Image ScaleByPercent(Image imgPhoto, int Percent)
+        {
+            //float nPercent = ((float)Percent / 100);
+
+            //int sourceWidth = imgPhoto.Width;
+            //int sourceHeight = imgPhoto.Height;
+
+            int destWidth = Percent; //(int)(sourceWidth * nPercent);
+            int destHeight = Percent;//(int)(sourceHeight * nPercent);
+
+            Bitmap  bmPhoto = new Bitmap(destWidth, destHeight);
+            bmPhoto.SetResolution(imgPhoto.HorizontalResolution,
+                                    imgPhoto.VerticalResolution);
+
+            Graphics grPhoto = Graphics.FromImage(bmPhoto);
+            grPhoto.InterpolationMode = InterpolationMode.HighQualityBicubic;
+
+            grPhoto.DrawImage(imgPhoto, 0, 0, destWidth, destHeight);
+            grPhoto.Dispose();
+            return bmPhoto;
+        }
+    }
+}

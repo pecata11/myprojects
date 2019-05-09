@@ -1,0 +1,811 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using DocumentFormat.OpenXml.Drawing;
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Presentation;
+using ClearSlideLibrary.Dom.PPTTexts;
+using Shape = DocumentFormat.OpenXml.Presentation.Shape;
+using TextBody = DocumentFormat.OpenXml.Presentation.TextBody;
+using DocumentFormat.OpenXml;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
+using System.IO;
+
+namespace ClearSlideLibrary.Dom
+{
+    public class PPTShape : PPTShapeBase
+    {
+
+        // contains values of type: slideIndex_shapeId
+        public static LinkedList<string> effectShapes = new LinkedList<string>();
+
+        private const int FontPoint = 100;
+        private const double ROTATION_INDEX = 60000;
+        private const int ScalePercent = 35;
+        public Boolean IsText { get; set; }
+        public PPTSlide slide { get; set; }
+        private PlaceholderShape placeholder;
+
+
+
+        // Create a new linked list of strings.
+        public LinkedList<PPTParagraph> Texts = new LinkedList<PPTParagraph>();
+
+        public PPTShape(SlidePart slidePart, Shape shape, PPTSlide slide)
+        {
+            this.slide = slide;
+            SetShapeVisualProperties(slidePart, shape);
+            SetShapeNonVisualProperties(slidePart, shape);
+            SetSpecificProperties(slidePart, shape);
+
+        }
+
+
+        private void SetShapeNonVisualProperties(SlidePart slidePart, Shape shape)
+        {
+
+            if (shape.NonVisualShapeProperties.NonVisualDrawingProperties.HyperlinkOnClick != null)
+
+                foreach (HyperlinkRelationship link in slidePart.HyperlinkRelationships)
+                {
+                    if (link.Id.Equals(shape.NonVisualShapeProperties.NonVisualDrawingProperties.HyperlinkOnClick.Id))
+                    {
+                        ClickLinkUrl = link.Uri.IsAbsoluteUri ? link.Uri.AbsoluteUri : link.Uri.OriginalString;
+
+                    }
+                }
+            if (shape.NonVisualShapeProperties.NonVisualDrawingProperties.HyperlinkOnHover != null)
+                foreach (HyperlinkRelationship link in slidePart.HyperlinkRelationships)
+                {
+                    if (link.Id.Equals(shape.NonVisualShapeProperties.NonVisualDrawingProperties.HyperlinkOnHover.Id))
+                    {
+                        HoverLinkUrl = link.Uri.IsAbsoluteUri ? link.Uri.AbsoluteUri : link.Uri.OriginalString;
+                    }
+                }
+
+            var nonVisualShapeProp = new PPTNonVisualShapeProp
+                                         {
+                                             Id = "s1s" + //HARD CODED: we split it into separate HTML files!
+                                                  shape.NonVisualShapeProperties.NonVisualDrawingProperties.Id,
+                                             Name = shape.LocalName,
+                                             Type = "PPTShape"
+                                         };
+            base.NonVisualShapeProp = nonVisualShapeProp;
+        }
+
+        private void SetShapeVisualProperties(SlidePart slidePart, Shape shape)
+        {
+
+            if (shape.NonVisualShapeProperties.ApplicationNonVisualDrawingProperties.PlaceholderShape != null)
+            {
+                placeholder = shape.NonVisualShapeProperties.ApplicationNonVisualDrawingProperties.
+                                        PlaceholderShape;
+                if (placeholder.Type == null)
+                    placeholder.Type = PlaceholderValues.Body;
+            }
+
+
+            base.VisualShapeProp = new PPTVisualPPTShapeProp();
+            base.SetSlideLayoutVisualShapeProperties(slidePart, shape);
+            if (shape.ShapeProperties.Transform2D != null)
+            {
+                Int32Value rot = shape.ShapeProperties.Transform2D.Rotation;
+                if (rot != null)
+                {
+                    double degrees = Math.Round(rot / ROTATION_INDEX);
+                    if (degrees < 0)
+                    {
+                        degrees = 360 + degrees;
+                    }
+                    base.VisualShapeProp.Rotate = degrees;
+                }
+
+                base.VisualShapeProp.Extents = shape.ShapeProperties.Transform2D.Extents;
+                base.VisualShapeProp.Offset = shape.ShapeProperties.Transform2D.Offset;
+            }
+
+
+
+        }
+
+        private void SetSpecificProperties(SlidePart slidePart, Shape shape)
+        {
+
+            IsText = true;
+            //Check if this is text
+            if (shape.TextBody == null)
+            {
+                IsText = false;
+                return;
+            }
+
+            if (shape.TextBody.BodyProperties != null)
+            {
+                if (shape.TextBody.BodyProperties.Anchor != null)
+                    VerticalAlign = shape.TextBody.BodyProperties.Anchor;
+                if (shape.TextBody.BodyProperties.GetFirstChild<NormalAutoFit>() != null &&
+                    shape.TextBody.BodyProperties.GetFirstChild<NormalAutoFit>().FontScale != null)
+                    fontScale = shape.TextBody.BodyProperties.GetFirstChild<NormalAutoFit>().FontScale.Value;
+            }
+
+            int index = 0;
+            foreach (var paragraph in shape.TextBody.Descendants<Paragraph>())
+            {
+
+
+                var par = new PPTParagraph();
+                par.Paragraph = index++;
+
+                par.RunPropList = new List<PPTRunProperties>();
+
+                if (paragraph.ParagraphProperties != null)
+                {
+                    int level = paragraph.ParagraphProperties.Level == null ?
+                               -1 : paragraph.ParagraphProperties.Level.Value;
+                    par.Level = level;
+                }
+
+                par = SetParagraphProperties(paragraph, par, slidePart);
+
+                bool hasText = false;
+                foreach (var obj in paragraph.ChildElements)
+                {
+                    if (obj.GetType().Equals(typeof(Run)))
+                    {
+                        Run run = (Run)obj;
+                        hasText = true;
+                        PPTRunProperties runProp = new PPTRunProperties(par.defaultRunProperties);
+                        runProp.Text = run.Text.Text;
+                        SetRunProperties(run.RunProperties, runProp, shape);
+                        runProp.FontSize = Math.Round(fontScale * runProp.FontSize / 100000);
+                        par.RunPropList.Add(runProp);
+                    }
+                    if (obj.GetType().Equals(typeof(Field)))
+                    {
+                        Field run = (Field)obj;
+                        hasText = true;
+                        PPTRunProperties runProp = new PPTRunProperties(par.defaultRunProperties);
+                        runProp.Text = run.Text.Text;
+                        SetRunProperties(run.RunProperties, runProp, shape);
+                        runProp.FontSize = Math.Round(fontScale * runProp.FontSize / 100000);
+                        par.RunPropList.Add(runProp);
+                    }
+                    else if (obj.GetType().Equals(typeof(Break)))
+                    {
+                        Break aBreak = (Break)obj;
+                        PPTRunProperties runProp = new PPTRunProperties(par.defaultRunProperties);
+                        SetRunProperties(aBreak.RunProperties, runProp, shape);
+                        runProp.FontSize = Math.Round(fontScale * runProp.FontSize / 100000);
+                        runProp.isBreak = true;
+                        par.RunPropList.Add(runProp);
+
+                    }
+                }
+                //This is because when we set paragraph properties we add the bullet to the text runs.
+                //If we don't have text it still outputs the bullet character. 
+                if (par.bullet != null)
+                {
+                    if (hasText) par.RunPropList.Insert(0, par.bullet);
+                }
+                else
+                {
+                    if (!hasText) par.RunPropList.Clear();
+                }
+                Texts.AddLast(par);
+            }
+
+        }
+
+        private void SetRunProperties(RunProperties runProperties, PPTRunProperties runProp, Shape shape)
+        {
+            if (runProperties != null)
+            {
+                EffectList effects = runProperties.GetFirstChild<EffectList>();
+                if (effects != null && effects.HasChildren)
+                {
+                    UInt32Value id = shape.NonVisualShapeProperties.NonVisualDrawingProperties.Id;
+                    effectShapes.AddLast(slide.slideIndex + "_" + id.Value);
+                }
+
+                //get the text color.
+                var solidFill = runProperties.GetFirstChild<SolidFill>();
+                if (solidFill != null)
+                {
+                    ReadSolidFillColors(runProp, solidFill);
+                }
+                if (runProperties.FontSize != null)
+                {
+                    runProp.FontSize = runProperties.FontSize / FontPoint;
+                }
+                if (runProperties.Bold != null)
+                {
+                    runProp.Bold = runProperties.Bold;
+                }
+
+                if (runProperties.Italic != null)
+                {
+                    runProp.Italic = runProperties.Italic;
+                }
+                if (runProperties.Underline != null)
+                {
+                    runProp.Underline = runProperties.Underline.Value.ToString();
+                }
+                if (runProperties.Spacing != null)
+                {
+                    runProp.Spacing = runProperties.Spacing.Value;
+                }
+
+                var latinFonts = runProperties.GetFirstChild<LatinFont>();
+                var coplexScriptFonts = runProperties.Descendants<ComplexScriptFont>();
+
+                if (latinFonts != null)
+                {
+                    ReadFontFamilyFromTheme(runProp, latinFonts);
+                }
+                else if (coplexScriptFonts.GetEnumerator().Current != null)
+                {
+                    runProp.FontFamily = coplexScriptFonts.GetEnumerator().Current.Typeface;
+                }
+            }
+        }
+
+        private PPTParagraph SetParagraphProperties(Paragraph paragraph, PPTParagraph par, SlidePart slidePart)
+        {
+
+
+            TextListStyleType listStyleType = this.slide.defaultTextStyle;
+            if (slide.textStyles != null)
+            {
+                if (placeholder != null)
+                    if (placeholder.Type.Value.Equals(PlaceholderValues.Body)
+                        || placeholder.Type.Value.Equals(PlaceholderValues.SubTitle))
+                    {
+                        listStyleType = slide.textStyles.BodyStyle;
+                    }
+                    else if (placeholder.Type.Value.Equals(PlaceholderValues.Title)
+                            || placeholder.Type.Value.Equals(PlaceholderValues.CenteredTitle))
+                    {
+                        listStyleType = slide.textStyles.TitleStyle;
+                    }
+                    else
+                        listStyleType = slide.textStyles.OtherStyle;
+                //Check what should we add here for all placeholder values. 
+                //Should we take it by placeholder value or there is another property?
+            }
+
+
+            TextParagraphPropertiesType baseProperties = getFromTextListStyle(listStyleType, par.Level);
+            TextParagraphPropertiesType basePropertiesMaster = getFromTextListStyle(shapeListStyleMaster, par.Level);
+            TextParagraphPropertiesType basePropertiesLayout = getFromTextListStyle(shapeListStyleLayout, par.Level);
+
+            par.defaultRunProperties = new PPTRunProperties();
+
+
+            if (baseProperties != null)
+            {
+                par = FillParagraphProperties(par, baseProperties, slidePart);
+            }
+            if (basePropertiesMaster != null)
+            {
+                par = FillParagraphProperties(par, basePropertiesMaster, slidePart);
+            }
+            if (basePropertiesLayout != null)
+            {
+                par = FillParagraphProperties(par, basePropertiesLayout, slidePart);
+            }
+            if (paragraph.ParagraphProperties != null)
+            {
+                par = FillParagraphProperties(par, paragraph.ParagraphProperties, slidePart);
+            }
+            return par;
+        }
+
+        private TextParagraphPropertiesType getFromTextListStyle(TextListStyleType listStyleType, int level)
+        {
+            if (listStyleType != null)
+            {
+                switch (level)
+                {
+                    case 0: return listStyleType.Level1ParagraphProperties;
+                    case 1: return listStyleType.Level2ParagraphProperties;
+                    case 2: return listStyleType.Level3ParagraphProperties;
+                    case 3: return listStyleType.Level4ParagraphProperties;
+                    case 4: return listStyleType.Level5ParagraphProperties;
+                    case 5: return listStyleType.Level6ParagraphProperties;
+                    case 6: return listStyleType.Level7ParagraphProperties;
+                    case 7: return listStyleType.Level8ParagraphProperties;
+                    case 8: return listStyleType.Level9ParagraphProperties;
+                    default: return listStyleType.Level1ParagraphProperties;
+
+                }
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+
+        private TextParagraphPropertiesType getFromTextListStyle(ListStyle listStyleType, int level)
+        {
+            if (listStyleType != null)
+            {
+                switch (level)
+                {
+                    case 0: return listStyleType.Level1ParagraphProperties;
+                    case 1: return listStyleType.Level2ParagraphProperties;
+                    case 2: return listStyleType.Level3ParagraphProperties;
+                    case 3: return listStyleType.Level4ParagraphProperties;
+                    case 4: return listStyleType.Level5ParagraphProperties;
+                    case 5: return listStyleType.Level6ParagraphProperties;
+                    case 6: return listStyleType.Level7ParagraphProperties;
+                    case 7: return listStyleType.Level8ParagraphProperties;
+                    case 8: return listStyleType.Level9ParagraphProperties;
+                    default: return listStyleType.Level1ParagraphProperties;
+
+                }
+            }
+            else
+            {
+                return null;
+            }
+        }
+        private PPTParagraph FillParagraphProperties(PPTParagraph par, TextParagraphPropertiesType baseProperties, SlidePart slidePart)
+        {
+
+            if (baseProperties.LineSpacing != null)
+            {
+                par.lineSpacing = baseProperties.LineSpacing;
+            }
+            if (baseProperties.SpaceAfter != null)
+            {
+                par.spaceAfter = baseProperties.SpaceAfter;
+            }
+            if (baseProperties.SpaceBefore != null)
+            {
+                par.spaceBefore = baseProperties.SpaceBefore;
+            }
+
+            if (baseProperties.Alignment != null)
+            {
+                par.Align = baseProperties.Alignment.Value.ToString();
+            }
+            if (baseProperties.FontAlignment != null)
+            {
+                par.FontAlign = baseProperties.FontAlignment.Value.ToString();
+            }
+            if (baseProperties.Indent != null)
+            {
+                par.Indent = baseProperties.Indent.Value;
+            }
+            if (baseProperties.LeftMargin != null)
+            {
+                par.marginLeft = baseProperties.LeftMargin.Value;
+            }
+            if (baseProperties.RightMargin != null)
+            {
+                par.marginRight = baseProperties.RightMargin.Value;
+            }
+
+            if (baseProperties.Indent != null)
+            {
+                par.Indent = baseProperties.Indent.Value;
+            }
+            this.ReadDefaultRunProperties(par, baseProperties);
+            this.ReadBullets(par, baseProperties, slidePart);
+
+            if (baseProperties.GetFirstChild<NoBullet>() != null)
+            {
+                par.bullet = null;
+            }
+
+            return par;
+        }
+        //Read DefaultRunProperties element.
+        private void ReadDefaultRunProperties(PPTParagraph par, TextParagraphPropertiesType baseProperties)
+        {
+            var defRun = baseProperties.GetFirstChild<DefaultRunProperties>();
+            if (defRun != null)
+            {
+                var fontProp = par.defaultRunProperties;
+
+                if (defRun.FontSize != null)
+                {
+                    fontProp.FontSize = defRun.FontSize / FontPoint;
+                    //Console.WriteLine("The def font size is:" + fontProp.FontSize);
+                }
+                if (defRun.Bold != null)
+                {
+                    if (!fontProp.Bold)
+                    {
+                        fontProp.Bold = defRun.Bold;
+                    }
+                }
+                if (defRun.Italic != null)
+                {
+                    if (!fontProp.Italic)
+                    {
+                        fontProp.Italic = defRun.Italic;
+                    }
+                }
+                if (defRun.Spacing != null)
+                {
+                    fontProp.Spacing = defRun.Spacing;
+                }
+                var solidFill = defRun.GetFirstChild<SolidFill>();
+
+                if (solidFill != null)
+                {
+                    ReadSolidFillColors(fontProp, solidFill);
+                }
+                var latinFonts = defRun.GetFirstChild<LatinFont>();
+                this.ReadFontFamilyFromTheme(fontProp, latinFonts);
+            }
+        }
+
+        private void ReadBullets(PPTParagraph par, TextParagraphPropertiesType baseProperties, SlidePart slidePart)
+        {
+            var bulletProp = new PPTRunProperties();
+            bulletProp.isBullet = true;
+
+            if (baseProperties != null)
+            {
+                if (baseProperties.GetFirstChild<CharacterBullet>() != null)
+                {
+                    ReadCharacterBullets(par, baseProperties, bulletProp);
+                }
+                else if (baseProperties.GetFirstChild<PictureBullet>() != null)
+                {
+                    ReadPictureBullets(par, baseProperties, bulletProp, slidePart);
+                }
+
+            }
+        }
+
+        private void ReadPictureBullets(PPTParagraph par, TextParagraphPropertiesType baseProperties, PPTRunProperties bulletProp, SlidePart slidePart)
+        {
+            var picBul = baseProperties.GetFirstChild<PictureBullet>();
+            if (picBul != null)
+            {
+                string embed = picBul.Blip.Embed.Value;
+
+                string projectDir = System.IO.Path.GetDirectoryName(System.IO.Path.GetDirectoryName(Environment.CurrentDirectory));
+                string storageDir = System.IO.Path.Combine(projectDir, Globals.STORAGE_DIR);
+                CreateNewDirForPictureBullets("PictureBullet", storageDir);
+                string pictureBulletDir = System.IO.Path.Combine(storageDir, "PictureBullet");
+
+                try
+                {
+                    ExtractPictureBulletImage(bulletProp, embed, pictureBulletDir, slidePart);
+                    bulletProp.Text = embed;
+                }
+                catch (ArgumentOutOfRangeException aoex)
+                {
+                    Console.WriteLine(aoex.Message);
+                }
+
+                SetBulletProperties(par, baseProperties, bulletProp);
+            }
+        }
+
+        private void ExtractPictureBulletImage(PPTRunProperties bulletProp, string embed, 
+                                               string realDir, SlidePart slidePart)
+        {
+            try
+            {
+                OpenXmlPart masterPart = slide.SlideLayoutPart.SlideMasterPart.GetPartById(embed);
+
+                if (masterPart != null)
+                {
+                    if (masterPart.ContentType.Equals("image/png"))
+                    {
+                        var image = Image.FromStream(masterPart.GetStream());
+                        var scaledImage = Globals.ScaleByPercent(image, ScalePercent);
+                        string imageName = System.IO.Path.Combine(realDir, embed + ".png");
+                        scaledImage.Save(imageName);
+                    }
+                    else 
+                    {
+                        OpenXmlPart sldPart = slidePart.GetPartById(embed);
+                        if (sldPart != null)
+                        {
+                            if (sldPart.ContentType.Equals("image/png"))
+                            {
+                                var image = Image.FromStream(sldPart.GetStream());
+                                var scaledImage = Globals.ScaleByPercent(image, ScalePercent);
+                                string imageName = System.IO.Path.Combine(realDir, embed + ".png");
+                                scaledImage.Save(imageName);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (ArgumentException aex)
+            {
+                Console.WriteLine(aex.Message);
+            }
+        }
+
+        private string CreateNewDirForPictureBullets(string dirName, string destDir)
+        {
+            string path = System.IO.Path.Combine(destDir, dirName);
+            try
+            {
+                if (!Directory.Exists(path))
+                {
+                    Directory.CreateDirectory(path);
+                }
+                else
+                {
+                    /*  DirectoryInfo dirInfo = new DirectoryInfo(path);
+                      foreach (FileInfo fi in dirInfo.GetFiles())
+                      {
+                          fi.Delete();
+                      }
+                      Directory.Delete(path);
+                      Directory.CreateDirectory(path);
+                      */
+                }
+            }
+            catch (IOException iex)
+            {
+                Console.WriteLine(iex.Message);
+            }
+            return path;
+        }
+
+
+
+        private void ReadCharacterBullets(PPTParagraph par, TextParagraphPropertiesType baseProperties, PPTRunProperties bulletProp)
+        {
+            bulletProp.Text = "" + baseProperties.GetFirstChild<CharacterBullet>().Char;
+            SetBulletProperties(par, baseProperties, bulletProp);
+        }
+
+        private void SetBulletProperties(PPTParagraph par, TextParagraphPropertiesType baseProperties, PPTRunProperties bulletProp)
+        {
+            BulletFont font = baseProperties.GetFirstChild<BulletFont>();
+            if (font != null)
+            {
+                if (font.Typeface != null)
+                    bulletProp.FontFamily = font.Typeface;
+                if (font.PitchFamily != null)
+                {
+                    bulletProp.FontSize = font.PitchFamily;
+                }
+                else
+                {
+                    var latinFonts = font.GetFirstChild<LatinFont>();
+                    if (latinFonts != null)
+                    {
+                        ReadFontFamilyFromTheme(bulletProp, latinFonts);
+                    }
+                }
+            }
+            else
+            {
+                bulletProp.FontSize = par.defaultRunProperties.FontSize;
+            }
+
+            bulletProp.Left = par.marginLeft / Globals.LEAST_COMMON_MULTIPLE_100_254;
+
+            BulletColor buCol = baseProperties.GetFirstChild<BulletColor>();
+            if (buCol != null)
+            {
+                if (buCol.RgbColorModelHex != null)
+                {
+                    bulletProp.FontColor = "#" + buCol.RgbColorModelHex.Val.Value;
+                }
+                else
+                {
+                    if (buCol.GetFirstChild<SchemeColor>() != null)
+                    {
+                        ReadThemeSchemeColor(bulletProp, buCol.GetFirstChild<SchemeColor>());
+                    }
+                }
+            }
+
+            par.bullet = bulletProp;
+
+        }
+
+        //Read Font informationm from Theme part.
+        private void ReadFontFamilyFromTheme(PPTRunProperties runProp, LatinFont latinFonts)
+        {
+            FontScheme allSchemeFonts =
+                    slide.SlideLayoutPart.SlideMasterPart.ThemePart.Theme
+                    .ThemeElements.FontScheme;
+
+            var minorFont = allSchemeFonts.GetFirstChild<MinorFont>();
+            var majorFont = allSchemeFonts.GetFirstChild<MajorFont>();
+            if (latinFonts != null)
+            {
+                runProp.FontFamily = latinFonts.Typeface.Value;
+
+                if (latinFonts.Typeface.Value.Equals("+mj-lt"))
+                {
+                    runProp.FontFamily = majorFont.LatinFont.Typeface.Value;
+                }
+                else if (latinFonts.Typeface.Value.Equals("+mj-cs"))
+                {
+                    runProp.FontFamily = majorFont.ComplexScriptFont.Typeface.Value;
+                }
+                else if (latinFonts.Typeface.Value.Equals("+mj-ea"))
+                {
+                    runProp.FontFamily = majorFont.EastAsianFont.Typeface.Value;
+                }
+                else if (latinFonts.Typeface.Value.Equals("+mn-lt"))
+                {
+                    runProp.FontFamily = minorFont.LatinFont.Typeface.Value;
+                }
+                else if (latinFonts.Typeface.Value.Equals("+mn-cs"))
+                {
+                    runProp.FontFamily = minorFont.ComplexScriptFont.Typeface.Value;
+                }
+                else if (latinFonts.Typeface.Value.Equals("+mn-ea"))
+                {
+                    runProp.FontFamily = minorFont.EastAsianFont.Typeface.Value;
+                }
+            }
+        }
+
+        private void ReadThemeSchemeColor(PPTRunProperties fontProp, SchemeColor schemeColor)
+        {
+            if (schemeColor.Val == "bg1")
+            {
+                Light1Color light1Color = slide.SlideLayoutPart.SlideMasterPart.
+                    ThemePart.Theme.ThemeElements.ColorScheme.Light1Color;
+                if (light1Color.RgbColorModelHex != null)
+                {
+                    fontProp.FontColor = "#" + light1Color.RgbColorModelHex.Val.Value;
+                }
+                else if (light1Color.SystemColor != null)
+                {
+                    fontProp.FontColor = "#" + light1Color.SystemColor.LastColor.Value;
+                }
+            }
+            else if (schemeColor.Val == "bg2")
+            {
+                Light2Color light2Color = slide.SlideLayoutPart.SlideMasterPart.
+                    ThemePart.Theme.ThemeElements.ColorScheme.Light2Color;
+                if (light2Color.RgbColorModelHex != null)
+                {
+                    fontProp.FontColor = "#" + light2Color.RgbColorModelHex.Val.Value;
+                }
+                else if (light2Color.SystemColor != null)
+                {
+                    fontProp.FontColor = "#" + light2Color.SystemColor.LastColor.Value;
+                }
+            }
+            else if (schemeColor.Val == "tx1")
+            {
+                Dark1Color dark1Color = slide.SlideLayoutPart.SlideMasterPart.
+                   ThemePart.Theme.ThemeElements.ColorScheme.Dark1Color;
+                if (dark1Color.RgbColorModelHex != null)
+                {
+                    fontProp.FontColor = "#" + dark1Color.RgbColorModelHex.Val.Value;
+                }
+                else if (dark1Color.SystemColor != null)
+                {
+                    fontProp.FontColor = "#" + dark1Color.SystemColor.LastColor.Value;
+                }
+            }
+            else if (schemeColor.Val == "tx2")
+            {
+                Dark2Color dark2Color = slide.SlideLayoutPart.SlideMasterPart.
+                 ThemePart.Theme.ThemeElements.ColorScheme.Dark2Color;
+                if (dark2Color.RgbColorModelHex != null)
+                {
+                    fontProp.FontColor = "#" + dark2Color.RgbColorModelHex.Val.Value;
+                }
+                else if (dark2Color.SystemColor != null)
+                {
+                    fontProp.FontColor = "#" + dark2Color.SystemColor.LastColor.Value;
+                }
+            }
+            else if (schemeColor.Val == "hlink")
+            {
+                Hyperlink HyperLink = slide.SlideLayoutPart.SlideMasterPart.
+                 ThemePart.Theme.ThemeElements.ColorScheme.Hyperlink;
+                if (HyperLink.RgbColorModelHex != null)
+                {
+                    fontProp.FontColor = "#" + HyperLink.RgbColorModelHex.Val.Value;
+                }
+            }
+            else if (schemeColor.Val == "folHlink")
+            {
+                FollowedHyperlinkColor folHyperLink = slide.SlideLayoutPart.SlideMasterPart.
+                 ThemePart.Theme.ThemeElements.ColorScheme.FollowedHyperlinkColor;
+                if (folHyperLink.RgbColorModelHex != null)
+                {
+                    fontProp.FontColor = "#" + folHyperLink.RgbColorModelHex.Val.Value;
+                }
+            }
+            this.ReadAccentSchemeColors(fontProp, schemeColor);
+        }
+
+        private void ReadAccentSchemeColors(PPTRunProperties fontProp, SchemeColor schemeColor)
+        {
+            for (int i = 1; i <= 6; i++)
+            {
+                if (schemeColor.Val == "accent" + i)
+                {
+                    switch (i)
+                    {
+                        case 1:
+                            {
+                                Accent1Color c = slide.SlideLayoutPart.SlideMasterPart.
+                                        ThemePart.Theme.ThemeElements.ColorScheme.Accent1Color;
+                                if (c.RgbColorModelHex != null)
+                                    fontProp.FontColor = "#" + c.RgbColorModelHex.Val.Value;
+                            } break;
+                        case 2:
+                            {
+                                Accent2Color c = slide.SlideLayoutPart.SlideMasterPart.
+                                        ThemePart.Theme.ThemeElements.ColorScheme.Accent2Color;
+                                if (c.RgbColorModelHex != null)
+                                    fontProp.FontColor = "#" + c.RgbColorModelHex.Val.Value;
+                            } break;
+                        case 3:
+                            {
+                                Accent3Color c = slide.SlideLayoutPart.SlideMasterPart.
+                                           ThemePart.Theme.ThemeElements.ColorScheme.Accent3Color;
+                                if (c.RgbColorModelHex != null)
+                                    fontProp.FontColor = "#" + c.RgbColorModelHex.Val.Value;
+                            } break;
+                        case 4:
+                            {
+                                Accent4Color c = slide.SlideLayoutPart.SlideMasterPart.
+                                    ThemePart.Theme.ThemeElements.ColorScheme.Accent4Color;
+                                if (c.RgbColorModelHex != null)
+                                    fontProp.FontColor = "#" + c.RgbColorModelHex.Val.Value;
+                            } break;
+                        case 5:
+                            {
+                                Accent5Color c = slide.SlideLayoutPart.SlideMasterPart.
+                                           ThemePart.Theme.ThemeElements.ColorScheme.Accent5Color;
+                                if (c.RgbColorModelHex != null)
+                                    fontProp.FontColor = "#" + c.RgbColorModelHex.Val.Value;
+                            } break;
+                        case 6:
+                            {
+                                Accent6Color c = slide.SlideLayoutPart.SlideMasterPart.
+                                           ThemePart.Theme.ThemeElements.ColorScheme.Accent6Color;
+                                if (c.RgbColorModelHex != null)
+                                    fontProp.FontColor = "#" + c.RgbColorModelHex.Val.Value;
+                            } break;
+                        default: { } break;
+                    }
+                }
+            }
+        }
+
+        private void ReadSolidFillColors(PPTRunProperties runProp, SolidFill solidFill)
+        {
+            if (solidFill.RgbColorModelHex != null)
+            {
+                runProp.FontColor = "#" + solidFill.RgbColorModelHex.Val;
+            }
+            else if (solidFill.RgbColorModelPercentage != null)
+            {
+                int red = solidFill.RgbColorModelPercentage.RedPortion.Value;
+                int green = solidFill.RgbColorModelPercentage.GreenPortion.Value;
+                int blue = solidFill.RgbColorModelPercentage.BluePortion.Value;
+
+                var colorFromRGB = System.Drawing.Color.FromArgb(red, green, blue);
+                string fontcolor = System.Drawing.ColorTranslator.ToHtml(colorFromRGB);
+                runProp.FontColor = fontcolor;
+            }
+            else if (solidFill.SystemColor != null)
+            {
+                runProp.FontColor = "#" + solidFill.SystemColor.LastColor.Value;
+            }
+            if (solidFill.SchemeColor != null)
+            {
+                ReadThemeSchemeColor(runProp, solidFill.SchemeColor);
+            }
+        }
+    }
+}

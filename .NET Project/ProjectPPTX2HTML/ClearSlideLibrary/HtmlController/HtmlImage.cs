@@ -1,0 +1,80 @@
+﻿using System;
+using System.Text;
+
+namespace ClearSlideLibrary.HtmlController
+{
+    internal class HtmlImage : HtmlPresentationElement
+    {
+        public string HyperLink { get; set; }
+        public string FileExtension { get; set; }
+
+        public HtmlImage(string id, int width, int height,
+                         int top, int left, bool invisible,
+                         bool animatable, string extension)
+        {
+            base.id = id;
+            base.top = top;
+            base.left = left;
+            base.width = width;
+            base.height = height;
+            base.invisible = invisible;
+            base.animatable = animatable;
+            this.FileExtension = extension;
+        }
+
+        public override string DrawElement()
+        {
+            StringBuilder imageBuilder = new StringBuilder();
+
+            //add hyperlink into output html tag as style element.
+            string hyperlinkString="";
+            bool cursorPointer = false;
+            if (HyperLink != null)
+            {
+                cursorPointer = true;
+                hyperlinkString = "onclick=\"openHyperLink(this,1,'" + HyperLink + "')\" onmouseout=\"OutListener()\" onmouseover=\"OverListener()\"";
+            }
+              
+            string style = invisible ? "DC0" : "DC1";
+            String idForHtml = id;
+            if ("gif".Equals(FileExtension))
+                idForHtml += ".gif";
+            else if ("jpg".Equals(FileExtension) || "jpeg".Equals(FileExtension))
+                idForHtml += ".jpg";
+            else if ("bmp".Equals(FileExtension))
+                idForHtml += ".bmp";
+            else
+                idForHtml += ".png";
+
+            if (animatable)
+            {
+                imageBuilder.Append("<div id=\"" + id + "\" style=\"top:" + top.ToString() + "px;left:" + left.ToString() +
+                               "px;height:" + height.ToString() + "px;width:" + width.ToString() + "px;" + (cursorPointer ? "cursor:pointer" : "") + "\"" + hyperlinkString + ">");
+                imageBuilder.Append("<div class=\"" + style + "\" id=\"" + idForHtml + "\">");                
+                imageBuilder.Append("<img />");                
+                imageBuilder.Append("</div>");
+                imageBuilder.Append("</div>");
+            }
+            else
+            {
+                imageBuilder.Append("<div id=\"" + id + "\" style=\"top:" + top.ToString() + "px;left:" + left.ToString() +
+                                    "px;height:" + height.ToString() + "px;width:" + width.ToString() + "px;" + (cursorPointer ? "cursor:pointer" : "") + "\"" + hyperlinkString + ">");
+                imageBuilder.Append("<div class=\"" + style + "\" id=\"" + idForHtml + "\">");
+                imageBuilder.Append("<img />");
+                imageBuilder.Append("</div>");
+                imageBuilder.Append("</div>");
+            }
+
+            return imageBuilder.ToString();
+        }
+
+        public override string ToString()
+        {
+            Console.WriteLine("The top is:" + top);
+            Console.WriteLine("The left is:" + left);
+            Console.WriteLine("The width is:" + width);
+            Console.WriteLine("The height is:" + height);
+            return string.Format("[{0}, {1}, {2}, {3}]", top, left, width, height);
+        }
+    }
+}

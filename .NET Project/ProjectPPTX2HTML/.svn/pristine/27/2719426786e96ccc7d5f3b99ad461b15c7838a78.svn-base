@@ -1,0 +1,105 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{20274D95-0502-4343-8442-82B0DBAB6E13}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>ClearSlideLibrary</RootNamespace>
+    <AssemblyName>T</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="DocumentFormat.OpenXml, Version=2.0.5022.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.Office.Interop.PowerPoint, Version=14.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </Reference>
+    <Reference Include="Office, Version=14.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <Reference Include="WindowsBase" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Animations\AnimationTypes.cs" />
+    <Compile Include="Animations\EmphasisAnimation.cs" />
+    <Compile Include="Animations\MotionPathAnimation.cs" />
+    <Compile Include="Animations\IAnimation.cs" />
+    <Compile Include="Animations\JSONGenerator.cs" />
+    <Compile Include="Animations\SimpleAnimation.cs" />
+    <Compile Include="Animations\TransitionAnimation.cs" />
+    <Compile Include="Dom\Globals.cs" />
+    <Compile Include="Dom\IPPTDrawable.cs" />
+    <Compile Include="Dom\PPTConnectionShape.cs" />
+    <Compile Include="Dom\PPTGraphicFrame.cs" />
+    <Compile Include="Dom\PPTGroupShape.cs" />
+    <Compile Include="Dom\PPTLayout.cs" />
+    <Compile Include="Dom\PPTContainerShape.cs" />
+    <Compile Include="Dom\PPTNonVisualShapeProp.cs" />
+    <Compile Include="Dom\PPTShapeBase.cs" />
+    <Compile Include="Dom\PPTImage.cs" />
+    <Compile Include="Dom\PPTSlide.cs" />
+    <Compile Include="Dom\PPTTexts\PPTParagraph.cs" />
+    <Compile Include="Dom\PPTTexts\PPTRunProperties.cs" />
+    <Compile Include="HtmlController\HtmlConnectionShape.cs" />
+    <Compile Include="HtmlController\HtmlGroupShape.cs" />
+    <Compile Include="PPTBuilder\PPTConnectionShapeBuilder.cs" />
+    <Compile Include="PPTBuilder\PPTGroupShapeBuilder.cs" />
+    <Compile Include="Dom\PPTVisualPPTShapeProp.cs" />
+    <Compile Include="Dom\PPTShape.cs" />
+    <Compile Include="HtmlController\HtmlImage.cs" />
+    <Compile Include="HtmlController\HtmlImageGIF.cs" />
+    <Compile Include="HtmlController\HtmlPresentationElement.cs" />
+    <Compile Include="HtmlController\HtmlController.cs" />
+    <Compile Include="HtmlController\HtmlShape.cs" />
+    <Compile Include="HtmlController\HtmlSlide.cs" />
+    <Compile Include="HtmlController\HtmlSmartArt.cs" />
+    <Compile Include="HtmlController\HtmlText.cs" />
+    <Compile Include="PPTBuilder\PPTGraphicFrameBuilder.cs" />
+    <Compile Include="PPTBuilder\PPTPresenationBuilder.cs" />
+    <Compile Include="PPTBuilder\PPTBackgroundBuilderInterop.cs" />
+    <Compile Include="PPTBuilder\PPTImageBuilder.cs" />
+    <Compile Include="PPTBuilder\PPTShapeBuilder.cs" />
+    <Compile Include="PPTBuilder\PPTContainerShapeBuilder.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Service References\" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

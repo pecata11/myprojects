@@ -1,0 +1,430 @@
+﻿using System;
+using System.Text;
+using System.Collections.Generic;
+using System.Linq;
+using ClearSlideLibrary.Dom;
+using System.Drawing;
+using System.Windows.Forms;
+using ClearSlideLibrary.Dom.PPTTexts;
+
+
+namespace ClearSlideLibrary.HtmlController
+{
+    internal class HtmlShape : HtmlPresentationElement
+    {
+        public PPTShape Shape { get; set; }
+        public double Rotate { get; set; }
+        public string HyperLink { get; set; }        
+        private int slideIndex;
+
+        public HtmlShape(string id, int width, int height,
+                         int top, int left, bool invisible,
+                         bool animatable, int slideIndex)
+        {
+            base.id = id;
+            base.top = top;
+            base.left = left;
+            base.width = width;
+            base.height = height;
+            base.invisible = invisible;
+            base.animatable = animatable;
+            this.slideIndex = slideIndex;
+        }
+
+        public override string DrawElement()
+        {
+            StringBuilder shapeBuilder = new StringBuilder();
+            //we need this for text (if any in the shape).
+            /*string slideId = id.Substring(0, 2);
+            int slideNumber = Int32.Parse(slideId.Substring(1, 1));
+            string shapeId = id.Substring(2, 2);
+            int shapeNumber = Int32.Parse(shapeId.Substring(1, 1));*/
+
+            string style = invisible ? "DC0" : "DC1";
+
+            //the object has animation.
+            if (animatable)
+            {
+
+                shapeBuilder.Append("<div id=\"" + id + "\" style=\"top:" + top.ToString() + "px;left:" + left.ToString() +
+                               "px;height:" + height.ToString() + "px;width:" + width.ToString() + "px;\">");
+                shapeBuilder.Append("<div class=\"" + style + "\" id=\"" + id + "c" + "\">");
+                shapeBuilder.Append("<img />");
+                shapeBuilder.Append("</div>");
+                shapeBuilder.Append("</div>");
+                if (Shape.IsText)
+                {
+                    if (Shape.Texts != null)
+                    {
+                        DrawText(shapeBuilder);
+                    }
+                }
+            }
+            else
+            {
+                shapeBuilder.Append("<div id=\"" + id + "\" style=\"top:" + top.ToString() + "px;left:" + left.ToString() +
+                                 "px;height:" + height.ToString() + "px;width:" + width.ToString() + "px;\">");
+                shapeBuilder.Append("<img/>");
+                shapeBuilder.Append("</div>");
+                if (Shape.IsText)
+                {
+                    if (Shape.Texts != null)
+                    {
+                        DrawText(shapeBuilder);
+                    }
+                }
+
+
+            }
+            return shapeBuilder.ToString();
+        }
+
+        private void DrawText(StringBuilder shapeBuilder)
+        {
+            int top = getTopForCurrentAnchoring(this.Shape.VerticalAlign, this.Shape.Texts);
+
+
+            foreach (var par in Shape.Texts)
+            {
+
+                //If top add spacing before - otherwise not (I think)
+                int paragraphTop = this.top + (this.Shape.VerticalAlign.Equals(DocumentFormat.OpenXml.Drawing.TextAnchoringTypeValues.Top) ? par.getSpaceBeforePoints() : 0); 
+
+                string htmlStyle = par.Invisible ? "DC0" : "DC1";
+                if (par.Animatable)
+                {
+                    shapeBuilder.Append("<div id=\"" + id + "p" + par.Paragraph + "\" style=\"top:" + paragraphTop + "px;left:" + this.left.ToString() +
+                                   "px;height:" + height.ToString() + "px;width:" + width.ToString() + "px;\">");
+                    shapeBuilder.Append("<div class=\"" + htmlStyle + "\" id=\"" + id + "p" + par.Paragraph + "c" + "\">");
+                }
+                else
+                {
+                    shapeBuilder.Append("<div id=\"" + id + "p" + par.Paragraph + "\" style=\"top:" + (this.top).ToString() + "px;left:" + this.left.ToString() +
+                                     "px;height:" + height.ToString() + "px;width:" + width.ToString() + "px;\">");
+                }
+
+                int newTop = par.getSpaceBeforePoints();
+                int left = 0;
+
+                List<HtmlText> textElements = new List<HtmlText>();
+                if (par.RunPropList == null || par.RunPropList.Count == 0 && par.defaultRunProperties != null)  //Only paragraph!
+                {
+                    float points = float.Parse(par.defaultRunProperties.FontSize.ToString()) * 72.0F / 96.0F;
+                    Font font = new System.Drawing.Font(par.defaultRunProperties.FontFamily.ToString(), points);
+                    newTop = font.Height;
+                }
+                List<HtmlText> processedElements = new List<HtmlText>();
+                foreach (var text in breakTextsToShape(par))
+                {
+                    float points = float.Parse(text.FontSize.ToString()) * 72.0F / 96.0F;
+                    Font font = new System.Drawing.Font(text.FontFamily.ToString(), points);
+                    if (text.Bold) font = new System.Drawing.Font(text.FontFamily.ToString(), points, FontStyle.Bold);
+                    else if (text.Italic)
+                        font = new System.Drawing.Font(text.FontFamily.ToString(), points, FontStyle.Italic);
+                    else if (text.Underline != null && text.Underline.Equals("Single"))
+                    font = new System.Drawing.Font(text.FontFamily.ToString(), points, FontStyle.Underline);
+                    newTop = font.Height > newTop ? font.Height : newTop;                    
+                    newTop = par.getLineSpacingInPointsFromFont(newTop);
+
+
+                    if (text.isBreak)
+                    {
+                        top += newTop;
+                        left = 0;
+                        fixLeftSpacingForAlignment(processedElements, par,font);
+                        processedElements.Clear();
+                        continue;
+                    }
+                    String currentString =  text.Text.TrimEnd()+ getStringFromTextElements(processedElements);
+                    //Text must already be broken to lines
+                    //Size size = MeasureString(currentString, font);
+//                     if (size.Width > this.width - par.Indent - par.marginLeft - par.marginRight) 
+//                     {
+//                         top += newTop;
+//                         left = 0;
+//                         fixLeftSpacingForAlignment(processedElements, par, font);
+//                         processedElements.Clear();
+//                     }
+
+
+                    HtmlText t1 = new HtmlText(left: left,
+                                               top: top,
+                                               fontFamily: text.FontFamily,
+                                               fontColor: text.FontColor,
+                                               fontSize: text.FontSize,
+                                               isBullet: text.isBullet,
+                                               bold: text.Bold,
+                                               italic: text.Italic,
+                                               underline: text.Underline,                                               
+                                               id: id,
+                                               slideIndex: slideIndex)
+                    {
+                        Rotate = Rotate                      
+                    };
+
+                    t1.width = MeasureString(text.Text, font);
+
+                    if (text.isBullet && text.Text != null && text.Text.StartsWith("rId"))
+                    {
+                        t1.PictureBullet = true;
+                        t1.width = text.bulletSize;
+                        t1.bulletSize = text.bulletSize;
+                        newTop = text.bulletSize;
+                    }
+                    t1.Text = text.Text;
+                    textElements.Add(t1);
+                    processedElements.Add(t1);
+                }
+                fixLeftSpacingForAlignment(processedElements, par);
+
+                HtmlText lastTxt = null;
+                List<HtmlText> mergedTextElements = new List<HtmlText>();
+                foreach (HtmlText textElement in textElements)
+                {
+                    if (lastTxt == null || !lastTxt.sameProps(textElement))
+                        mergedTextElements.Add(textElement);
+                    else
+                        mergedTextElements[mergedTextElements.Count - 1].Text += textElement.Text;
+
+                    lastTxt = textElement;
+                }
+
+                foreach (HtmlText textElement in mergedTextElements)
+                    shapeBuilder.Append(textElement.DrawElement());
+                top += newTop;
+                top += par.getSpaceAfterPoints(newTop);
+                top += par.getSpaceBeforePoints(newTop);
+
+
+                shapeBuilder.Append("</div>");
+                if (par.Animatable)
+                    shapeBuilder.Append("</div>");
+            }
+        }
+        private String getStringFromTextElements(List<HtmlText> elements)
+        {
+            if (elements == null || elements.Count == 0)
+                return "";
+            StringBuilder result=new StringBuilder();
+            foreach(HtmlText el in elements){
+                result.Append(el.Text);          
+            }            
+            return result.ToString();
+        }
+        //We have two similar methods. This is worse because it uses the Width property of each element instead of measuring the whole string. 
+        //There is mistake in the calculations coming from that and the difference is bigger when there are more elements. 
+        private void fixLeftSpacingForAlignment(List<HtmlText> textElements, PPTParagraph par)
+        {
+            int combinedWidth = 0;
+
+            foreach (HtmlText textElement in textElements)
+                combinedWidth += textElement.width;
+            int bulletOffset = 0;
+            if (par.bullet != null && textElements.Count > 0 && !textElements[0].isBullet)
+            {
+                combinedWidth += par.bullet.bulletSize;
+                bulletOffset = par.bullet.bulletSize;
+            }
+            
+            int currentLeft = 0;
+            if ("Center".Equals(par.Align))
+                currentLeft = ((this.width - par.Indent - bulletOffset - par.marginLeft - par.marginRight - Shape.LeftInset - Shape.RightInset) - combinedWidth) / 2;
+            else if ("Right".Equals(par.Align))
+                currentLeft = (this.width - par.Indent - bulletOffset - par.marginLeft - par.marginRight - Shape.LeftInset - Shape.RightInset) - combinedWidth;
+
+            foreach (HtmlText textElement in textElements)
+            {
+                textElement.setLeft(currentLeft + par.Indent + bulletOffset + par.marginLeft + Shape.LeftInset);
+                currentLeft += textElement.width;
+            }
+        }
+
+        //We have two similar methods - this one is better because it measures the whole string with the font. 
+        private void fixLeftSpacingForAlignment(List<HtmlText> textElements, PPTParagraph par, Font font)
+        {
+            int combinedWidth = 0;
+          
+            StringBuilder combinedText = new StringBuilder();
+            foreach (HtmlText textElement in textElements)
+            {
+                if(textElement.PictureBullet)
+                    combinedWidth += textElement.bulletSize;
+                else
+                combinedText.Append(textElement.Text);
+            }
+            int bulletOffset = 0;
+            if (par.bullet != null && textElements.Count > 0 && !textElements[0].isBullet)
+            {
+                bulletOffset = par.bullet.bulletSize;
+                combinedWidth += par.bullet.bulletSize;
+            }
+            combinedWidth += MeasureString(combinedText.ToString(), font);
+         
+            int firstLeft = 0;
+            if ("Center".Equals(par.Align))
+                firstLeft = ((this.width - par.Indent - bulletOffset - par.marginLeft - par.marginRight - Shape.LeftInset - Shape.RightInset) - combinedWidth) / 2;
+            else if ("Right".Equals(par.Align))
+                firstLeft = (this.width - par.Indent - bulletOffset - par.marginLeft - par.marginRight + Shape.LeftInset + Shape.RightInset) - combinedWidth;
+            combinedText = new StringBuilder();
+            combinedWidth = 0; //Now used only for picture bullets!
+            foreach (HtmlText textElement in textElements)
+            {
+                textElement.setLeft(firstLeft + par.Indent + bulletOffset + par.marginLeft + combinedWidth + Shape.LeftInset + MeasureString(combinedText.ToString(), font));
+                if (textElement.PictureBullet)
+                    combinedWidth += textElement.bulletSize;
+                else
+                    combinedText.Append(textElement.Text);
+            }
+
+
+        }
+
+        private int getTopForCurrentAnchoring(DocumentFormat.OpenXml.Drawing.TextAnchoringTypeValues anchoring, LinkedList<PPTParagraph> paragraphList)
+        {
+            if (anchoring.Equals(DocumentFormat.OpenXml.Drawing.TextAnchoringTypeValues.Top))
+                return Shape.TopInset;
+
+            int combinedHeight = 0;
+            foreach (PPTParagraph par in paragraphList)
+            {
+                int newTop = 0;
+                IEnumerable<PPTRunProperties> splitText=breakTextsToShape(par);
+                foreach (var text in splitText)
+                {
+                    float points = float.Parse(text.FontSize.ToString()) * 72.0F / 96.0F;
+                    Font font = new System.Drawing.Font(text.FontFamily.ToString(), points);
+                    if (text.Bold) font = new System.Drawing.Font(text.FontFamily.ToString(), points, FontStyle.Bold);
+                    else if (text.Italic) font = new System.Drawing.Font(text.FontFamily.ToString(), points, FontStyle.Italic);
+                    else if (text.Underline != null && text.Underline.Equals("Single"))
+                        font = new System.Drawing.Font(text.FontFamily.ToString(), points, FontStyle.Underline);                    
+                    if (text.isBreak)
+                    {
+                        combinedHeight += newTop;
+                        newTop = font.Height;
+                        continue;
+                    }
+                    
+                    newTop = font.Height > newTop ? font.Height : newTop;
+
+                }
+                combinedHeight += par.getLineSpacingInPointsFromFont(newTop);
+                combinedHeight += par.getSpaceBeforePoints(newTop);
+                combinedHeight += par.getSpaceAfterPoints(newTop);                
+            }
+
+            combinedHeight += Shape.TopInset + Shape.BottomInset;
+            if (anchoring.Equals(DocumentFormat.OpenXml.Drawing.TextAnchoringTypeValues.Bottom))
+                return this.height - combinedHeight;
+
+            return (this.height - combinedHeight) / 2;  //Center align
+
+
+
+        }
+
+        private IEnumerable<PPTRunProperties> breakTextsToShape(PPTParagraph par)
+        {
+            List<Dom.PPTTexts.PPTRunProperties> list = par.RunPropList;
+            List<PPTRunProperties> result = new List<PPTRunProperties>();            
+            String previousToken = null;
+            int bulletSize = 0;
+            foreach (var text in list)
+            {
+                float points = float.Parse(text.FontSize.ToString()) * 72.0F / 96.0F;
+                Font font = new System.Drawing.Font(text.FontFamily.ToString(), points);
+                if (text.Bold) font = new System.Drawing.Font(text.FontFamily.ToString(), points, FontStyle.Bold);
+                else if (text.Italic) font = new System.Drawing.Font(text.FontFamily.ToString(), points, FontStyle.Italic);
+                else if (text.Underline != null && text.Underline.Equals("Single"))
+                    font = new System.Drawing.Font(text.FontFamily.ToString(), points, FontStyle.Underline);
+
+                int size = 0;
+                if (text.isBullet && text.Text != null && text.Text.StartsWith("rId"))
+                    bulletSize = text.bulletSize;
+                else
+                    size = MeasureString((previousToken == null ? "" : previousToken + " ") + text.Text, font);
+                if (text.isBreak || size + bulletSize < this.width - par.Indent -par.marginLeft - par.marginRight - Shape.LeftInset - Shape.RightInset)
+                {
+                    if (text.Text != null && text.Text.Trim() != "" && !(text.isBullet && text.Text.StartsWith("rId")))
+                    {
+                        previousToken = (previousToken == null ? "" : previousToken ) + text.Text;
+                    }
+                    if (text.isBreak)
+                        previousToken = null;
+                    result.Add(text);                    
+                    continue;
+                }
+
+             //   previousToken = null;
+
+                string[] tokens= text.Text.Split(' ');
+                int index = 0;
+                foreach (string token in tokens)
+                {
+                    index++;           
+                    int combinedSize = MeasureString((previousToken == null ? "" : previousToken + " ")+token , font);
+
+                    if (combinedSize + bulletSize > this.width - par.Indent - par.marginLeft - par.marginRight - Shape.LeftInset - Shape.RightInset)
+                    {
+                        PPTRunProperties temp = new PPTRunProperties(text);                        
+                        temp.Text = "";
+                        temp.isBreak = true;
+                        result.Add(temp);
+
+                        temp=new PPTRunProperties(text);
+                        temp.Text=index<tokens.Length? token+" ":token;
+                        result.Add(temp);
+                        previousToken = token;                        
+                    }
+                    else
+                    {
+                        PPTRunProperties temp = new PPTRunProperties(text);
+                        temp.Text = index < tokens.Length ? token + " " : token;
+                        result.Add(temp);
+                        previousToken = (previousToken == null ? "" : previousToken + " ") + token;
+                    }                    
+                }
+            }
+            return result;
+        }
+
+        public static int MeasureString(string s, Font font)
+        {
+            s = s.Replace("\t", "aaaa");//TODO the replace is dirty hack for measuring tabulations
+
+            StringFormat stringFormat = new StringFormat(StringFormat.GenericTypographic);            
+            CharacterRange[] rng = { new CharacterRange(0, s.Length) };
+            stringFormat.SetMeasurableCharacterRanges(rng);
+            Graphics g= Graphics.FromImage(new Bitmap(100, 100));
+            //Use measure character ranges with a big box because we used this for measurement only
+            //Later we might better use this for drawing the text. 
+            Region[] regions =g.MeasureCharacterRanges(s, font, new Rectangle(0, 0, 10000,3000), stringFormat); 
+            foreach (Region region in regions)
+            {                
+                RectangleF rect = region.GetBounds(g);
+                return (int)Math.Round(rect.Width);
+            }
+            return 0;
+
+// 
+//             SizeF result;
+//             using (var image = new Bitmap(1, 1))
+//             {
+//                 using (var g = Graphics.FromImage(image))
+//                 {
+//                     result = g.MeasureString(s, font);
+//                 }
+//             }
+// 
+//             return result.ToSize();
+        }
+
+        public override string ToString()
+        {
+            Console.WriteLine("The top is:" + top);
+            Console.WriteLine("The left is:" + left);
+            Console.WriteLine("The width is:" + width);
+            Console.WriteLine("The height is:" + height);
+            return string.Format("[{0}, {1}, {2}, {3}]", top, left, width, height);
+        }
+    }
+}

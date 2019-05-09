@@ -1,0 +1,143 @@
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/davia/!svn/ver/547/trunk/mobile/iOS/BirthdayCalendar/KalLibrary
+END
+KalLogic.m
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/davia/!svn/ver/494/trunk/mobile/iOS/BirthdayCalendar/KalLibrary/KalLogic.m
+END
+KalPrivate.h
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/KalLibrary/KalPrivate.h
+END
+KalView.h
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/davia/!svn/ver/841/trunk/mobile/iOS/BirthdayCalendar/KalLibrary/KalView.h
+END
+KalDate.h
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/KalLibrary/KalDate.h
+END
+KalViewController.h
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/davia/!svn/ver/816/trunk/mobile/iOS/BirthdayCalendar/KalLibrary/KalViewController.h
+END
+Kal.h
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/KalLibrary/Kal.h
+END
+KalView.m
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/davia/!svn/ver/841/trunk/mobile/iOS/BirthdayCalendar/KalLibrary/KalView.m
+END
+Kal_Prefix.pch
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/KalLibrary/Kal_Prefix.pch
+END
+UIViewAdditions.h
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/KalLibrary/UIViewAdditions.h
+END
+KalMonthView.h
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/KalLibrary/KalMonthView.h
+END
+KalGridView.h
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/davia/!svn/ver/841/trunk/mobile/iOS/BirthdayCalendar/KalLibrary/KalGridView.h
+END
+KalDate.m
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/KalLibrary/KalDate.m
+END
+KalViewController.m
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/davia/!svn/ver/816/trunk/mobile/iOS/BirthdayCalendar/KalLibrary/KalViewController.m
+END
+UIViewAdditions.m
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/KalLibrary/UIViewAdditions.m
+END
+KalGridView.m
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/davia/!svn/ver/841/trunk/mobile/iOS/BirthdayCalendar/KalLibrary/KalGridView.m
+END
+KalMonthView.m
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/KalLibrary/KalMonthView.m
+END
+NSDateAdditions.h
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/KalLibrary/NSDateAdditions.h
+END
+KalTileView.h
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/davia/!svn/ver/423/trunk/mobile/iOS/BirthdayCalendar/KalLibrary/KalTileView.h
+END
+KalDataSource.h
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/davia/!svn/ver/34/trunk/mobile/iOS/BirthdayCalendar/KalLibrary/KalDataSource.h
+END
+NSDateAdditions.m
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/davia/!svn/ver/229/trunk/mobile/iOS/BirthdayCalendar/KalLibrary/NSDateAdditions.m
+END
+KalTileView.m
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/davia/!svn/ver/475/trunk/mobile/iOS/BirthdayCalendar/KalLibrary/KalTileView.m
+END
+KalLogic.h
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/davia/!svn/ver/229/trunk/mobile/iOS/BirthdayCalendar/KalLibrary/KalLogic.h
+END
+KalDataSource.m
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/KalLibrary/KalDataSource.m
+END

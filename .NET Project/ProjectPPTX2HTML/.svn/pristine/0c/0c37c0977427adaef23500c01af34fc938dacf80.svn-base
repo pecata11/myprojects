@@ -1,0 +1,104 @@
+﻿using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Presentation;
+using System;
+
+namespace ClearSlideLibrary.Dom
+{
+    public class PPTImage : PPTShapeBase
+    {
+        public PPTImage(SlidePart slidePart, Picture picture)
+        {
+            GetShapeVisualProperties(slidePart, picture);
+            GetShapeNonVisualProperties(slidePart, picture);
+        }
+
+        //Image specific properties
+        public string RelatedImageId { get; set; }
+        public string FileName { get; set; }
+        public string TargetName { get; set; }
+        public string FileExtension { get; set; }
+        public bool HasEffects { get; set; }
+
+        private void GetShapeVisualProperties(SlidePart slidePart, Picture picture)
+        {
+            base.VisualShapeProp = new PPTVisualPPTShapeProp();
+
+            if (picture.ShapeProperties.Transform2D != null)
+            {
+                base.VisualShapeProp.Extents = picture.ShapeProperties.Transform2D.Extents;
+                base.VisualShapeProp.Offset = picture.ShapeProperties.Transform2D.Offset;
+                string rId = picture.BlipFill.Blip.Embed.Value;
+                ImagePart imagePart = (ImagePart)slidePart.GetPartById(rId);
+                FileExtension = imagePart.Uri.OriginalString.Substring(imagePart.Uri.OriginalString.LastIndexOf(".") + 1).ToLower();
+            }
+            else
+            {
+                ShapeTree shapeTree =
+              slidePart.SlideLayoutPart.SlideLayout.CommonSlideData.ShapeTree;
+                if (shapeTree != null)
+                {
+                    var layoutShape = shapeTree.GetFirstChild<Picture>();
+                    if (layoutShape.ShapeProperties.Transform2D != null)
+                    {
+                        VisualShapeProp.Extents = layoutShape.ShapeProperties.Transform2D.Extents;
+                        VisualShapeProp.Offset = layoutShape.ShapeProperties.Transform2D.Offset;
+                    }
+                }
+                //base.SetSlideLayoutVisualShapeProperties(slidePart,picture);
+            }
+            DocumentFormat.OpenXml.Drawing.EffectList effectList = picture.ShapeProperties.GetFirstChild<DocumentFormat.OpenXml.Drawing.EffectList>();
+            if (effectList != null)
+            {
+                recalculatePropertiesWithEffect(effectList);
+            }
+        }
+
+        private void recalculatePropertiesWithEffect(DocumentFormat.OpenXml.Drawing.EffectList effectList)
+        {
+            if (effectList.Reflection != null)
+            {
+                //Reflection doubles the image size - check for other animations!
+                if (effectList.Reflection.HorizontalRatio != null)
+                {
+                    VisualShapeProp.Extents.Cx *= 2;
+                }
+
+                if (effectList.Reflection.VerticalRatio != null)
+                {
+                    VisualShapeProp.Extents.Cy *= 2;
+                }
+
+            }
+
+        }
+
+        private void GetShapeNonVisualProperties(SlidePart slidePart, Picture shape)
+        {
+
+            if (shape.NonVisualPictureProperties.NonVisualDrawingProperties.HyperlinkOnClick != null)
+                foreach (HyperlinkRelationship link in slidePart.HyperlinkRelationships)
+                {
+                    if (link.Id.Equals(shape.NonVisualPictureProperties.NonVisualDrawingProperties.HyperlinkOnClick.Id))
+                    {
+                        ClickLinkUrl = link.Uri.IsAbsoluteUri ? link.Uri.AbsoluteUri : link.Uri.OriginalString;
+                    }
+                }
+            if (shape.NonVisualPictureProperties.NonVisualDrawingProperties.HyperlinkOnHover != null)
+                foreach (HyperlinkRelationship link in slidePart.HyperlinkRelationships)
+                {
+                    if (link.Id.Equals(shape.NonVisualPictureProperties.NonVisualDrawingProperties.HyperlinkOnHover.Id))
+                    {
+                        HoverLinkUrl = link.Uri.IsAbsoluteUri ? link.Uri.AbsoluteUri : link.Uri.OriginalString;
+                    }
+                }
+            var nonVisualShapeProp = new PPTNonVisualShapeProp
+                                         {
+                                             Id = "s1s" + //HARD CODED: we split it into separate HTML files!
+                                                  shape.NonVisualPictureProperties.NonVisualDrawingProperties.Id,
+                                             Name = shape.LocalName,
+                                             Type = "PPTImage"
+                                         };
+            base.NonVisualShapeProp = nonVisualShapeProp;
+        }
+    }
+}

@@ -1,0 +1,30 @@
+﻿using ClearSlideLibrary.Dom;
+using DocumentFormat.OpenXml.Packaging;
+
+namespace ClearSlideLibrary.PPTBuilder
+{
+    internal class PPTContainerShapeBuilder
+    {
+        public PPTContainerShape GetPPTContainerShape(SlidePart slidePart, PPTSlide slide)
+        {
+            var pptContainerShape = new PPTContainerShape();
+
+            var shapeBuilder = new PPTShapeBuilder();
+            pptContainerShape.Shapes = shapeBuilder.GetShapes(slidePart, slide);
+
+            var imageBuilder = new PPTImageBuilder();
+            pptContainerShape.Images = imageBuilder.GetImages(slidePart);
+
+            var graphicsBuilder = new PPTGraphicFrameBuilder();
+            pptContainerShape.GraphicFrames = graphicsBuilder.GetGraphicFrames(slidePart);
+
+            var groupShape = new PPTGroupShapeBuilder();
+            pptContainerShape.GroupShapes = groupShape.GetGroupShapes(slidePart);
+
+            var connectionShape = new PPTConnectionShapeBuilder();
+            pptContainerShape.ConnectionShapes = connectionShape.GetConnectionShapes(slidePart);
+
+            return pptContainerShape;
+        }
+    }
+}

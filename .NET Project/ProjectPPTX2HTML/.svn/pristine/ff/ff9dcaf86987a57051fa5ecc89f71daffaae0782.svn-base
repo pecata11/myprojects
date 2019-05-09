@@ -1,0 +1,10 @@
+﻿namespace ClearSlideLibrary.Dom
+{
+    public static class Globals
+    {
+        // public const string ROOT_DIR = Path.GetDirectoryName(Path.GetDirectoryName(Environment.CurrentDirectory));
+        public const string STORAGE_DIR = "PictureExtracts";
+        public const string IMAGE_TO_SHAPE_MAPPING_FILE = "imageShapeMappingFile.txt";
+        public const int LEAST_COMMON_MULTIPLE_100_254 = 12700;
+    }
+}

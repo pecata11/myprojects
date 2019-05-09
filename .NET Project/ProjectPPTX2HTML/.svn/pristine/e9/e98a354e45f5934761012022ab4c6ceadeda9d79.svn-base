@@ -1,0 +1,92 @@
+﻿using System;
+using System.IO;
+using System.Collections.Generic;
+using ClearSlideLibrary.Dom;
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Presentation;
+using Path = System.IO.Path;
+
+namespace ClearSlideLibrary.PPTBuilder
+{
+    public class PPTPresenationBuilder
+    {
+        public List<PPTSlide> GetPPTSlides(string pathToPresentation)
+        {
+            string fileFromPath = Path.GetFileName(pathToPresentation);
+            var inf = new FileInfo(fileFromPath);
+            string fileName = Path.GetFileNameWithoutExtension(inf.Name);
+
+            string dir = Path.GetDirectoryName(Path.GetDirectoryName(Environment.CurrentDirectory));
+            string destDir = Path.Combine(dir, Globals.STORAGE_DIR);
+
+            PresentationDocument presentationDocument = null;
+            try
+            {
+                presentationDocument = PresentationDocument.Open(pathToPresentation, false);
+            }
+            catch (Exception ex)
+            {
+                throw new FileNotFoundException(
+                    "PPTPresenationController.Ctor Unable to open Power Point Presentation.Path - "
+                    + pathToPresentation, ex.InnerException);
+            }
+            if (presentationDocument == null)
+            {
+                throw new ArgumentNullException("Presentation Document missing");
+            }
+
+
+
+            IEnumerable<SlidePart> slideParts = GetPresentationSlideParts(presentationDocument);
+            List<PPTSlide> pptSlides = GetPPTSlidesFromParts(slideParts, presentationDocument.PresentationPart.Presentation.DefaultTextStyle);
+
+            var pptInteropt = new PPTBackgroundBuilderInterop(pathToPresentation);
+            pptInteropt.ExportPresentationImages(destDir);
+            pptInteropt = null;
+            GC.Collect();
+
+            return pptSlides;
+        }
+        
+        private IEnumerable<SlidePart> GetPresentationSlideParts(PresentationDocument presentationDocument)
+        {
+            var slideParts = new List<SlidePart>();
+            
+            PresentationPart presentationPart = presentationDocument.PresentationPart;
+            if (presentationPart != null && presentationPart.Presentation != null)
+            {
+                Presentation presentation = presentationPart.Presentation;
+                if (presentation.SlideIdList != null)
+                {
+                    foreach (var slideId in presentation.SlideIdList.Elements<SlideId>())
+                    {
+                        try
+                        {
+                            slideParts.Add((SlidePart) presentationPart.GetPartById(slideId.RelationshipId));
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new ArgumentNullException("Unable to add slide part." + ex.InnerException);
+                        }
+                    }
+                }
+            }
+
+            return slideParts;
+        }
+
+        private List<PPTSlide> GetPPTSlidesFromParts(IEnumerable<SlidePart> slideParts, DefaultTextStyle defaultTextStyle)
+        {
+            var pptSlides = new List<PPTSlide>();
+            int slideNumber = 1;
+
+            foreach (SlidePart slidePart in slideParts)
+            {
+                var pptSlide = new PPTSlide(slidePart, slideNumber, defaultTextStyle);
+                pptSlides.Add(pptSlide);
+            }
+
+            return pptSlides;
+        }
+    }
+}

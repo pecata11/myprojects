@@ -1,0 +1,77 @@
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/davia/!svn/ver/345/trunk/mobile/iOS/BirthdayCalendar/Classes/src
+END
+Facebook.h
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/Classes/src/Facebook.h
+END
+FBFrictionlessRequestSettings.m
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/Classes/src/FBFrictionlessRequestSettings.m
+END
+FBDialog.m
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/davia/!svn/ver/186/trunk/mobile/iOS/BirthdayCalendar/Classes/src/FBDialog.m
+END
+Facebook.m
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/Classes/src/Facebook.m
+END
+FBLoginDialog.h
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/Classes/src/FBLoginDialog.h
+END
+FBRequest.h
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/Classes/src/FBRequest.h
+END
+FBConnect.h
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/Classes/src/FBConnect.h
+END
+facebook_ios_sdk_Prefix.pch
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/Classes/src/facebook_ios_sdk_Prefix.pch
+END
+FBLoginDialog.m
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/davia/!svn/ver/186/trunk/mobile/iOS/BirthdayCalendar/Classes/src/FBLoginDialog.m
+END
+FBRequest.m
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/Classes/src/FBRequest.m
+END
+FBFrictionlessRequestSettings.h
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/Classes/src/FBFrictionlessRequestSettings.h
+END
+FBDialog.h
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/Classes/src/FBDialog.h
+END

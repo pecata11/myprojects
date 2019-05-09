@@ -1,0 +1,35 @@
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/support
+END
+holidays.json
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/support/holidays.json
+END
+holidays_preprocessor.py
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/support/holidays_preprocessor.py
+END
+gen_all.sh
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/support/gen_all.sh
+END
+holidays.txt
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/support/holidays.txt
+END
+holidays_setup.sql
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/support/holidays_setup.sql
+END

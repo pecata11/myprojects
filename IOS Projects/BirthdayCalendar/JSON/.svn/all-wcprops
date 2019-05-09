@@ -1,0 +1,83 @@
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/JSON
+END
+JSON.h
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/JSON/JSON.h
+END
+SBJsonBase.h
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/JSON/SBJsonBase.h
+END
+SBJsonParser.h
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/JSON/SBJsonParser.h
+END
+SBJsonWriter.h
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/JSON/SBJsonWriter.h
+END
+SBJSON.h
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/JSON/SBJSON.h
+END
+SBJsonBase.m
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/JSON/SBJsonBase.m
+END
+SBJsonParser.m
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/JSON/SBJsonParser.m
+END
+SBJsonWriter.m
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/JSON/SBJsonWriter.m
+END
+NSObject+SBJSON.h
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/JSON/NSObject+SBJSON.h
+END
+NSString+SBJSON.h
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/JSON/NSString+SBJSON.h
+END
+SBJSON.m
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/JSON/SBJSON.m
+END
+NSObject+SBJSON.m
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/JSON/NSObject+SBJSON.m
+END
+NSString+SBJSON.m
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/davia/!svn/ver/5/trunk/mobile/iOS/BirthdayCalendar/JSON/NSString+SBJSON.m
+END

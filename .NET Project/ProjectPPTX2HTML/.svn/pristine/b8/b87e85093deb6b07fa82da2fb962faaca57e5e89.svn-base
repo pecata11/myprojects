@@ -1,0 +1,1266 @@
+function gco(a) {
+    return document.getElementById(a)
+}
+function gci(a, b) {
+    return "s" + b + "s" + a
+}
+
+//used when we have a hyper links in page.
+function openHyperLink(element, t, link) {
+    var r = element.getElementsByTagName("div");
+    if (r.length > 0) {
+        if (DOPStyle.s(r[0], "opacity") == 0 &&
+            element.getElementsByTagName("canvas").length == 0)
+            return
+    }
+    else {
+        if (DOPStyle.s(e.parentNode, "opacity") == 0 &&
+            element.parentNode.parentNode.getElementsByTagName("canvas").length == 0) return
+    }
+    if (t == 1) window.open(link);
+    if (t == 0) gotoSlide(link)
+}
+
+function play() {
+    gStartTime = gStartTime + (new Date).getTime() - gtct;
+    gpp = 0;
+    gafi = UpdategT();
+    if (gafi == 0) return;
+    gp = 1;
+    gco("playB").style.backgroundPosition = "-99px 0px"
+}
+function pause() {
+    gpp = 1;
+    gp = 0;
+    gco("playB").style.backgroundPosition = "-1px 0px"
+}
+
+function currentSlideAnimationTiming() {
+    galength.splice(0, galength.length);
+    var a = animations["s" + gc];
+    var b = a.t.i;
+    a = a.c;
+    if (a != 0) {
+        for (var c in a) {
+            if (c != "i") {
+                b += a[c].i;
+                galength[galength.length] = gslength[gc - 1] + b
+            }
+        }
+    } else {
+        galength[0] = 0
+    }
+}
+//REF
+function playCurrentAniamtion() {
+    var curAnimationList = currentAnimationList();
+    for (var i = 0; i < curAnimationList.length; i++) {
+        curAnimationList[i].play()
+    }
+}
+//REF
+function pauseCurrentAniamtion() {
+    var curAnimationList = currentAnimationList();
+    for (var i = 0; i < curAnimationList.length; i++) {
+        curAnimationList[i].pause()
+    }
+}
+//REF
+function stopCurrentAniamtion() {
+    var curAnimationList = currentAnimationList();
+    for (var j = 0; j < curAnimationList.length; j++) {
+        curAnimationList[j].stop()
+    }
+}
+//REF
+function resetCurrentAniamtion() {
+    var curAnimationList = currentAnimationList();
+    for (var j = 0; j < curAnimationList.length; j++) {
+        curAnimationList[j].reset()
+    }
+}
+
+//REF
+function currentAnimationList() {
+    var arr = new Array;
+    var anim_b = animations["s" + gc].g;
+    var c = animations["s" + gc];
+    c = c.c;
+    var testAnim = 1 * anim_b + 1;
+    var hasMoreAnim = c["c" + testAnim];
+    if (typeof (hasMoreAnim) == 'undefined') {
+        lastAnimationPlaying = true;
+    }
+    c = c["c" + anim_b];
+    for (var ind in c) {
+        if (ind != "i") {
+            if (c[ind].v == 0) {
+                clickCaller(c, galength[animations["s" + gc].g] - c.i)
+            }
+            arr[arr.length] = c[ind].v
+        }
+    }
+
+    return arr
+}
+
+//REF
+function setProgress() {
+    var seconds = Math.floor(gt / 1e3 % 60);
+    var minutes = Math.floor(gt / 1e3 / 60 % 60);
+    if (seconds < 10) seconds = "0" + seconds;
+    if (minutes < 10) minutes = "0" + minutes;
+    document.getElementById("times").innerHTML = minutes + ":" + seconds;
+    var width = 250 / gplength * gt;
+    if (width > 250) {
+        width = 250
+    }
+    gco("Bar").style.width = width + "px"
+}
+
+//REF
+function startDrag(a) {
+
+    function getClientX(a) {
+        var b = a.changedTouches[0].clientX;
+        return b
+    }
+    var b = gr * 50;
+    clearTimeout(timeout);
+
+    $("#inextid").stop().animate({ right: 0 }, 1e3);
+    $("#iprevid").stop().animate({ left: 0 }, 1e3);
+    $("#ddiv").stop().animate({ bottom: 0 }, 1e3)
+    timeout = setTimeout(function () {
+        $("#inextid").stop().animate({ right: -b }, 1e3);
+        $("#iprevid").stop().animate({ left: -b }, 1e3);
+        if (gf == 0)
+            $("#ddiv").stop().animate({ bottom: -60 }, 1e3)
+    }, 4e3);
+
+    var c = getClientX(a);
+    var d = gco("resizer");
+
+    d.ontouchend = function (a) {
+        var b = getClientX(a);
+        d.ontouchmove = d.ontouchend = null;
+        if (c - b > 100) {
+            next(0)
+        } else if (c - b < -100) {
+            prev(0)
+        }
+    };
+    return false
+}
+function atLoadAutoStart() {
+    atload();
+    fnPre();
+}
+//REF
+function atload() {
+
+    function setStyle() {
+        if (loading(gc) == 0) {
+            setTimeout(setStyle, 40);
+            return
+        }
+        if (gco("play") != null) {
+            gco("play").style.display = "block";
+            gco("idpre").style.backgroundColor = "";
+            gco("idpre").style.display = "block";
+            gco("s" + gc + "s0").style.display = "block"
+        }
+    }
+
+    try {
+        document.createEvent("TouchEvent");
+        gd = 1
+    } catch (a) {
+        gd = 0;
+        document.getElementById("toolbar").style.backgroundColor = "rgb(255,255,255)";
+        document.getElementById("toolbar").style.borderTop = "#CCCCCC 1px solid"
+    }
+
+    if (gd == 1) {
+        gco("buttonDiv").style.display = "none";
+        gco("status").style.display = "block";
+        gco("time").style.display = "none";
+        gco("progress").style.display = "none";
+        if (navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPod/i)) {
+            function createTempDiv() {
+                function setHeight() {
+                    window.scrollTo(0, 1);
+                    gco("tempDiv").style.height = window.innerHeight - 3 + "px"
+                }
+                var a = document.getElementsByTagName("body")[0];
+                var b = document.createElement("div");
+                b.id = "tempDiv";
+                a.appendChild(b);
+                gco("tempDiv").style.height = "1000px";
+                gco("tempDiv").style.width = "1px";
+                gco("tempDiv").style.backgroundColor = "";
+                setTimeout(setHeight(), 100)
+            }
+            gco("bodyid").onorientationchange = createTempDiv;
+            createTempDiv()
+        }
+    }
+    resizer();
+    slideLoader(gc);
+    gco("current").value = currentText(gc);
+    setStyle();
+    gslength[0] = 0;
+
+    for (var d = 1; d <= gv.t; d++) {
+        var e = animations["s" + d];
+        e.f = gslength[d] = gslength[d - 1];
+        gslength[d] += e.t.i;
+        e = e.c;
+        if (e != 0) {
+            for (var f in e) {
+                if (typeof e[f].i != "undefined") {
+                    gslength[d] += e[f].i
+                }
+            }
+        }
+    }
+    gplength = gslength[gslength.length - 1];
+    var timeCalc = " / ";
+    if (Math.floor(gplength / 1e3 / 60) < 10)
+        timeCalc += "0" + Math.floor(gplength / 1e3 / 60);
+    else timeCalc += Math.floor(gplength / 1e3 / 60);
+
+    timeCalc += ":";
+
+    if (Math.floor(gplength / 1e3 % 60) < 10)
+        timeCalc += "0" + Math.floor(gplength / 1e3 % 60);
+    else timeCalc += Math.floor(gplength / 1e3 % 60);
+    document.getElementById("time").innerHTML = document.getElementById("time").innerHTML + timeCalc;
+    currentSlideAnimationTiming()
+}
+
+//REF
+function fnPre() {
+    var a = document.getElementById("resizer");
+    if (gd == 1) {
+        gco("iprev").style.display = "block";
+        gco("inext").style.display = "block";
+        a.ontouchstart = startDrag
+    } else {
+        if (a.addEventListener) {
+            a.addEventListener("click", next, false)
+        } else {
+            a.attachEvent("onclick", next, false)
+        }
+    }
+    gco("idpre").style.zIndex = 0;
+    gco("idpre").innerHTML = "";
+    if (gd == 1) {
+        gco("iprevi").ontouchstart = function () {
+            gco("iprevi").src = gv.a + "/side11.png"
+        };
+        gco("inexti").ontouchstart = function () {
+            gco("inexti").src = gv.a + "/side21.png"
+        };
+        gco("iprev").ontouchstart = OnTouchStartPrev;
+        gco("inext").ontouchstart = OnTouchStartNext;
+
+        function OnTouchStartPrev(a) {
+            gco("iprev").ontouchend = function (a) {
+                gco("iprevi").src = gv.a + "/side1.png"
+            };
+            var b = gr * 50;
+            clearTimeout(gti);
+            $("#inextid").stop().animate({ right: 0 }, 1e3);
+            $("#iprevid").stop().animate({ left: 0 }, 1e3);
+            $("#ddiv").stop().animate({ bottom: 0 }, 1e3);
+            gti = setTimeout(function () {
+                $("#inextid").stop().animate({ right: -b }, 1e3);
+                $("#iprevid").stop().animate({ left: -b }, 1e3);
+                if (gf == 0) $("#ddiv").stop().animate({
+                    bottom: -60
+                }, 1e3)
+            }, 4e3)
+        }
+        function OnTouchStartNext(a) {
+            gco("inext").ontouchend = function (a) {
+                gco("inexti").src = gv.a + "/side2.png"
+            };
+            var b = gr * 50;
+            clearTimeout(gti);
+            $("#inextid").stop().animate({ right: 0 }, 1e3);
+            $("#iprevid").stop().animate({ left: 0 }, 1e3);
+            $("#ddiv").stop().animate({ bottom: 0 }, 1e3);
+
+            gti = setTimeout(function () {
+                $("#inextid").stop().animate({ right: -b }, 1e3);
+                $("#iprevid").stop().animate({ left: -b }, 1e3);
+                if (gf == 0)
+                    $("#ddiv").stop().animate({ bottom: -60 }, 1e3)
+            }, 4e3)
+        }
+    }
+    gco("buttonDiv").style.opacity = 1;
+    if (gv.sw * gr > 307) gco("progress").style.opacity = 1;
+    gtct = (new Date).getTime();
+    gStartTime = gtct - gslength[gc - 1];
+    acheck();
+    gco("playB").onmouseover = function () {
+        if (gp == 1) gco("playB").style.backgroundPosition = "-148px 0px";
+        else gco("playB").style.backgroundPosition = "-50px 0px"
+    };
+    gco("playB").onmouseout = function () {
+        if (gp == 1) gco("playB").style.backgroundPosition = "-99px 0px";
+        else gco("playB").style.backgroundPosition = "-1px 0px"
+    }
+}
+
+//REF
+function resizer() {
+    function setWidthAndHeight() {
+        if (typeof window.innerWidth == "number") {
+            gv.w = window.innerWidth;
+            gv.h = window.innerHeight
+        } else if (document.documentElement && (document.documentElement.clientWidth
+            || document.documentElement.clientHeight)) {
+            gv.w = document.documentElement.clientWidth;
+            gv.h = document.documentElement.clientHeight
+        } else if (document.body && (document.body.clientWidth || document.body.clientHeight)) {
+            gv.w = document.body.clientWidth;
+            gv.h = document.body.clientHeight
+        }
+    }
+    setWidthAndHeight();
+    if (gd == 0) gv.h -= 50;
+    var b = 1;
+    var resize = gco("resizer");
+    if (gv.w < gv.sw || gv.h < gv.sh) {
+        if ((gv.sw - gv.w) / gv.sw < (gv.sh - gv.h) / gv.sh) {
+            gr = 1 - (gv.sh - gv.h) / gv.sh
+        } else gr = 1 - (gv.sw - gv.w) / gv.sw
+    } else {
+        if ((gv.w - gv.sw) / gv.sw > (gv.h - gv.sh) / gv.sh) {
+            gr = 1 + (gv.h - gv.sh) / gv.sh
+        } else gr = 1 + (gv.w - gv.sw) / gv.sw
+    }
+    if (gv.b == 1 && gv.v == 0) {
+        resize.style.zoom = gr;
+        resize.style.left = gv.w / 2 - gr * gv.sw / 2 + "px";
+        resize.style.top = gv.h / 2 - gr * gv.sh / 2 + "px";
+        gco("toolbar").style.left = resize.style.left;
+        gco("toolbar").style.width = gv.w * gr + "px";
+        gco("ddiv").style.width = gv.w * gr + "px"
+    } else {
+        resize.style.marginLeft = (gv.w / 2 - gr * gv.sw / 2).toFixed(2) + "px";
+        resize.style.marginTop = (gv.h / 2 - gr * gv.sh / 2).toFixed(2) + "px";
+        resize.style.MozTransform = "scale(" + gr + ")";
+        resize.style.webkitTransform = "scale(" + gr + ")";
+        resize.style.OTransform = "scale(" + gr + ")";
+        resize.style.msTransform = "scale(" + gr + ")";
+        gco("toolbar").style.left = resize.style.marginLeft;
+        gco("toolbar").style.width = gv.sw * gr + "px";
+        gco("ddiv").style.width = gv.sw * gr + "px"
+    }
+    if (gv.sw * gr > 307) {
+        gco("time").style.opacity = 1;
+        gco("status").style.opacity = 1;
+        var d = gco("progress");
+        d.style.opacity = 1;
+        d.style.webkitTransform = "scale(" + gr / 1.5 + ",1)";
+        d.style.MozTransform = "scale(" + gr / 1.5 + ",1)";
+        d.style.OTransform = "scale(" + gr / 1.5 + ",1)";
+        d.style.msTransform = "scale(" + gr / 1.5 + ",1)"
+    } else {
+        gco("time").style.opacity = 0;
+        gco("status").style.opacity = 0;
+        gco("progress").style.opacity = 0
+    }
+    gco("buttonDiv").style.left = parseInt(gco("toolbar").style.width) / 2 - 25 + "px";
+    if (gd == 1) {
+        gco("iprev").style.height = gco("inext").style.height = gr * gv.sh + "px";
+        gco("iprev").style.width = gco("inext").style.width = gr * 70 + "px";
+        gco("inext").style.right = gco("iprev").style.left = resize.style.marginLeft;
+        gco("iprev").style.top = gco("inext").style.top = resize.style.marginTop;
+        gco("inexti").style.width = gco("iprevi").style.width = gr * 50 + "px";
+        gco("inexti").style.height = gco("iprevi").style.height = gr * 100 + "px";
+        gco("inexti").style.top = gco("iprevi").style.top = gr * gv.sh / 2 - gr * 50 + "px";
+        gco("inexti").style.left = gr * 70 - gr * 50 + "px"
+    }
+    if (gco("play") != null) {
+        if (gv.h < 600 || gv.w < 600) {
+            if (gv.h < gv.w) {
+                b = 1 - (400 - gv.h) / 200
+            } else {
+                b = 1 - (400 - gv.w) / 200
+            }
+            if (b > 1) b = 1;
+            if (b < .5) b = .5
+        } else {
+            b = 1
+        }
+        gco("play").style.height = 200 * b + "px";
+        gco("play").style.width = 200 * b + "px";
+        gco("play").style.top = gco("idpre").offsetHeight / 2 - 100 * b + "px";
+        gco("play").style.left = gco("idpre").offsetWidth / 2 - 100 * b + "px";
+        if (gd == 1) {
+            if (navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPod/i)) {
+                setTimeout(e(), 200);
+
+                function e() {
+                    gco("play").style.top = window.innerHeight / 2 - 100 * b + "px"
+                }
+            }
+        }
+    }
+}
+
+//REF
+function next(a) {
+
+    function checkParam() {
+        if (gc < gv.t || a == 1) {
+            if (gpc == 0) { gpc = gc }
+            if (a != 1) {
+                gc++;
+                gco("current").value = currentText(gc);
+                slideLoader(gc)
+            }
+
+            if (loading(gc) == 0) {
+                gli = setTimeout(function () {
+                    next(1)
+                }, 50);
+                return
+            }
+            animations["s" + gc].g = 0;
+            sweeper(gc);
+            gms();
+            animations["s" + gc].f = gt = gslength[gc - 1];
+            gStartTime = gStartTime - (gslength[gc - 1] - animations["s" + gpc].f);
+            currentSlideAnimationTiming();
+            acheck();
+            if (gv.s == 1) {
+                if (scormendstatus == false) {
+                    SetLocation(gc);
+                    SetMarks(gc / gv.t * 100)
+                }
+                if (gv.t == gc && scormendstatus == false) {
+                    QuitSCO("completed");
+                    scormendstatus = true
+                }
+            }
+            return
+        }
+    }
+    if (gx == 1) {
+        tranend();
+        return
+    }
+    if (a != 1 && gln != 0) {
+        if (gc == gv.t) return;
+        a == 0;
+        clearTimeout(gli);
+        checkParam();
+        return
+    }
+    if (a != 1 && gln == 0) {
+        if (gslength[gc] <= gt && (animations["s" + gc].g >= galength.length || animations["s" + gc].c == 0)) {
+            if (gc == gv.t) return;
+            pause();
+            if (animations["s" + gc].f < animations["s" + gc].c.i) {
+                animations["s" + gc].g++
+            }
+            checkParam();
+            return
+        }
+        if (gp == 1) {
+            clearTimeout(aatoid);
+            gStartTime = gStartTime - (galength[animations["s" + gc].g] - gt);
+            animations["s" + gc].f = gt = galength[animations["s" + gc].g];
+            setProgress();
+            fcon = 1;
+            return
+        }
+        if (galength[animations["s" + gc].g] >= gt) {
+            if (gp == 1) {
+                pause();
+                gStartTime = gStartTime + gt - galength[animations["s" + gc].g];
+                animations["s" + gc].f = gt = galength[animations["s" + gc].g];
+                setProgress();
+                animations["s" + gc].g++
+            } else {
+                playCurrentAniamtion();
+                for (var b = 0; b < au.length; b++) {
+                    au[b][0].play()
+                }
+                play()
+            }
+            return
+        }
+    }
+    checkParam()
+}
+
+//REF
+function prev(param) {
+
+    function setCurrentText() {
+
+        if (gpc == 0) {
+            gpc = gc
+        }
+
+        if (param != 1) {
+            gc = gc - 1;
+            gco("current").value = currentText(gc);
+            slideLoader(gc)
+        }
+
+        if (loading(gc) == 0) {
+            gli = setTimeout(function () {
+                prev(1)
+            }, 100);
+            return
+        }
+        setStartTime()
+    }
+    function setStartTime() {
+        gms();
+        currentSlideAnimationTiming();
+        gStartTime = gStartTime + (animations["s" + gpc].f - gslength[gc - 1]);
+        gt = gslength[gc - 1];
+        setProgress();
+        acheck()
+    }
+
+    if (gx == 1) {
+        tranend();
+        return
+    }
+    if (param != 1) {
+        if (gt - animations["s" + gc].t.i > gslength[gc - 1]) {
+            if (gp == 1) {
+                pause()
+            } else {
+                if (galength.indexOf(gt) > -1) animations["s" + gc].g--
+            }
+            resetCurrentAniamtion();
+            stopCurrentAniamtion();
+            if (animations["s" + gc].g > 0) {
+                gStartTime = gStartTime + (gt - galength[animations["s" + gc].g - 1]);
+                animations["s" + gc].f = gt = galength[animations["s" + gc].g - 1]
+            } else {
+                gStartTime = gStartTime + (gt - gslength[gc - 1] - animations["s" + gc].t.i);
+                animations["s" + gc].f = gt = gslength[gc - 1] + animations["s" + gc].t.i
+            }
+            setProgress();
+            return
+        }
+    }
+    if (gc > 1 || param == 1) {
+        setCurrentText()
+    }
+}
+
+//REF
+function keychanger(param) {
+    if (gco("play") == null) {
+        var keyCode;
+        if (!param) param = window.event;
+        if (param.keyCode) keyCode = param.keyCode;
+        else if (param.which) keyCode = param.which;
+        if (keyCode == 39 || keyCode == 40) next(0);
+        if (keyCode == 37 || keyCode == 38) prev(0)
+    }
+}
+//REF
+function EnterCurrent(param) {
+    if (gx == 1) {
+        tranend();
+        return
+    }
+    var keyCode = param.keyCode || param.which;
+    if (keyCode == 13) {
+        var current = gco("current").value;
+        if (!isNaN(curent)) {
+            curret = parseInt(c);
+            gotoSlide(current)
+        }
+    }
+}
+function gotoSlide(a) {
+    function b(a) {
+        pause();
+        stopCurrentAniamtion();
+        slideLoader(a)
+    }
+    function c() {
+        clearTimeout(gli);
+        var a = loading(gc);
+        if (a == 0) {
+            gli = setTimeout(function () {
+                c()
+            }, 100);
+            return
+        }
+        currentSlideAnimationTiming();
+        gStartTime = gStartTime - (gslength[gc - 1] - animations["s" + gpc].f);
+        gt = gslength[gc - 1];
+        setProgress();
+        acheck()
+    }
+    function d() {
+        clearTimeout(gli);
+        var a = loading(gc);
+        if (a == 0) {
+            gli = setTimeout(function () {
+                d()
+            }, 100);
+            return
+        }
+        currentSlideAnimationTiming();
+        gStartTime = gStartTime + (animations["s" + gpc].f - gslength[gc - 1]);
+        gt = gslength[gc - 1];
+        setProgress();
+        acheck()
+    }
+    if (gpc == 0) {
+        gpc = gc
+    }
+    if (a == gv.t || a > gv.t) {
+        b(gv.t);
+        gc = gv.t;
+        gco("current").value = currentText(gc);
+        gms();
+        c()
+    } else if (a > gc) {
+        b(a);
+        gc = a;
+        gco("current").value = currentText(gc);
+        gms();
+        c()
+    } else if (a == gc) return;
+    else if (a > 0) {
+        b(a);
+        gc = a;
+        gco("current").value = currentText(gc);
+        gms();
+        d()
+    } else if (a < 0) {
+        b(0);
+        gc = 0;
+        gco("current").value = currentText(gc);
+        gms();
+        d()
+    }
+}
+
+function OverListener() {
+    var a = gco("resizer");
+    if (gt == 0) {
+        if (a.addEventListener) {
+            a.removeEventListener("click", next, false)
+        } else {
+            a.detachEvent("onclick", next)
+        }
+    }
+}
+function OutListener() {
+    var a = gco("resizer");
+    if (gt == 1) {
+        a.ontouchstart = startDrag
+    } else {
+        if (a.addEventListener) {
+            a.addEventListener("click", next, false)
+        } else {
+            a.attachEvent("onclick", next)
+        }
+    }
+}
+function currentText(a) {
+    var b = ("" + gv.t).length;
+    var c = ("" + a).length;
+    if (c == b) {
+        return a
+    }
+    if (c == b - 1) {
+        return "0" + a
+    }
+    if (c == b - 2) {
+        return "00" + a
+    }
+}
+function loading(a) {
+    if (gv.i[a] == -1) return 1;
+    var b = gco("s" + a + "s0").getElementsByTagName("img");
+    for (i = 0; i < b.length; i++) {
+        if (!b[i].complete) {
+            gco("loadingImg").style.display = "block";
+            gln = 1;
+            return 0
+        }
+    }
+    gco("loadingImg").style.display = "none";
+    gln = 0;
+    gv.i[a] = -1;
+    return 1
+}
+function slideLoader(a) {
+    for (j = a - 1; j < a + 2; j++) {
+        if (j > 0 && j <= gv.t) {
+            if (gv.i[j] >= 1) {
+                var b = document.getElementById("s" + j + "s0").getElementsByTagName("img");
+                b[0].src = gv.a + "/sb" + gv.i[j] + ".jpeg";
+                for (var c = 1; c < b.length; c++) {
+                    if (b[c].src == "") {
+                        tempSrc = gv.a + "/" + b[c].parentNode.id;
+                        if (tempSrc.lastIndexOf("c") == tempSrc.length - 1) tempSrc = tempSrc.substr(0, tempSrc.length - 1) + ".png";
+                        if (tempSrc.indexOf(".") == -1) tempSrc += ".png";
+                        b[c].src = tempSrc;
+                    }
+                }
+                b = document.getElementById("s" + j + "s0").getElementsByTagName("video");
+                for (var d = 0; d < b.length; d++) {
+                    var e = b[d].parentNode;
+                    var f = document.createElement("video");
+                    f.setAttribute("height", b[d].height);
+                    f.setAttribute("width", b[d].width);
+                    if (gv.v == "mp4") {
+                        f.setAttribute("src", gv.a + "/v" + e.id + ".mp4")
+                    } else {
+                        f.setAttribute("src", gv.a + "/v" + e.id + ".ogg")
+                    }
+                    e.removeChild(b[d]);
+                    e.appendChild(f)
+                }
+                b = document.getElementById("s" + j + "s0").getElementsByTagName("audio");
+                for (var g = 0; g < b.length; g++) {
+                    var e = b[g].parentNode;
+                    var h = document.createElement("audio");
+                    if (gv.v == "mp4") {
+                        h.setAttribute("src", gv.a + "/a" + e.id + ".mp3")
+                    } else {
+                        h.setAttribute("src", gv.a + "/a" + e.id + ".ogg")
+                    }
+                    e.removeChild(b[g]);
+                    e.appendChild(h)
+                }
+                var b = animations["s" + j];
+                b = b.c;
+                for (n in b) {
+                    if (n != "i") for (d in b[n]) {
+                        if (d != "i") {
+                            if (typeof b[n][d].c6 != "undefined" && b[n][d].name != 5 && b[n][d].name != 6 && b[n][d].name != 7 && b[n][d].name != 8 && b[n][d].name != 9 && b[n][d].name != 0) {
+                                if (gv.v == "mp4") {
+                                    var h = document.createElement("audio");
+                                    h.setAttribute("id", b[n][d].c6);
+                                    h.setAttribute("src", gv.a + "/" + b[n][d].c6 + ".mp3");
+                                    document.getElementById("s" + j + "s0").appendChild(h)
+                                } else {
+                                    var h = document.createElement("audio");
+                                    h.setAttribute("id", b[n][d].c6);
+                                    h.setAttribute("src", gv.a + "/" + b[n][d].c6 + ".ogg");
+                                    document.getElementById("s" + j + "s0").appendChild(h)
+                                }
+                            }
+                        }
+                    }
+                }
+                gv.i[j] = 0
+            }
+        }
+    }
+}
+function gfl() {
+    if (typeof gfc == "undefined") return;
+    x = document.getElementsByTagName("head");
+    n = x[0].getElementsByTagName("style")[0];
+    n.innerHTML = ".SC{height:" + gv.sh + "px;width:" + gv.sw + "px;display: none;}";
+    for (i = 0; i < gfc.length; i++) {
+        n.innerHTML = n.innerHTML + "@font-face{font-family: " + gfc[i] + ";src:url(" + gv.a + "/" + gfc[i] + ".ttf);}"
+    }
+}
+function acheck() {
+    var a = animations["s" + gc];
+    a = a.c;
+    a = animations["s" + gc].t;
+
+    if (a.c != 0) {
+        if (a.v == 0) {
+            a.v = new tran(a.c);
+            a.v.initialize(gslength[gc - 1])
+        }
+        a.v.play();
+        play();
+        return 0
+    } else {
+        if (gpc != gc) gco("s" + gpc + "s0").style.display = "none";
+        gco("s" + gc + "s0").style.display = "block";
+        gpc = 0;
+        gt = animations["s" + gc].f;
+        gStartTime = gStartTime - (gt - gslength[gc - 1]);
+        setProgress();
+        if (animations["s" + gc].f == gslength[gc - 1] + animations["s" + gc].t.i) {
+            if (animations["s" + gc].t.n == 1) {
+                playCurrentAniamtion();
+                play()
+            }
+        } else if (galength.indexOf(animations["s" + gc].f) == -1) {
+            playCurrentAniamtion();
+            play()
+        }
+    }
+}
+function clickCaller(a, b) {
+    for (n in a) {
+        if (n != "i") animationCaller(a[n], b)
+    }
+}
+function animationCaller(a, b) {
+    switch (a.state) {
+        case 1:
+            gae(a, b);
+            break;
+        case 2:
+            gax(a, b);
+            break;
+        case 3:
+            gas(a, b);
+            break;
+        case 4:
+            gam(a, b);
+            break;
+        case 5:
+            gav(a, b);
+            break;
+        case 8:
+            gaa(a, b);
+            break;
+        case "n":
+            gad(a);
+            break
+    }
+}
+function gae(c, q) {
+    if (c.v == 0) {
+        if (typeof window[c.name] != "undefined") var cname = eval("new " + c.name + "(c)");
+        else var cname = new Fade(c);
+        c.v = cname;
+        c.v.Initialize(q)
+    }
+}
+function gax(c, q) {
+    if (c.v == 0) {
+        if (typeof window[c.name] != "undefined") var cname = eval("new " + c.name + "(c)");
+        else var cname = new Fade(c);
+        c.v = cname;
+        c.v.Initialize(q)
+    }
+}
+function gas(c, q) {
+    if (c.v == 0) {
+        if (typeof window[c.name] != "undefined") var cname = eval("new " + c.name + "(c)");
+        else var cname = new Spin(c);
+        c.v = cname;
+        c.v.Initialize(q)
+    }
+}
+function gam(c, q) {
+    if (c.v == 0) {
+        var cname = eval("new " + c.name + "(c)");
+        c.v = cname;
+        c.v.Initialize(q)
+    }
+}
+function gav(a, b) {
+    if (a.v == 0) switch (a.name) {
+        case 5:
+            a.v = new aVideo(a, b);
+            break;
+        case 6:
+            a.v = new aVideo(a, b);
+            break;
+        case 7:
+            a.v = new aVideo(a, b);
+            break
+    }
+}
+function gaa(a, b) {
+    if (a.v == 0) switch (a.name) {
+        case 8:
+            a.v = new aAudio(a, b);
+            break;
+        case 9:
+            a.v = new aAudio(a, b);
+            break;
+        case 0:
+            a.v = new aAudio(a, b);
+            break
+    }
+}
+function gad(a) {
+    clearTimeout(aatoid);
+    a.v = new autoAdvance(a)
+}
+function sweeper(a) {
+    if (a < 1 || a > gv.t) return;
+    var b = animations["s" + a];
+    b = b.c;
+    if (b != 0) {
+        for (n in b) {
+            if (n != "i") {
+                var c = b[n];
+                for (m in c) {
+                    if (m != "i") {
+                        if (c[m].v != 0) c[m].v.reset();
+                        else return
+                    }
+                }
+            }
+        }
+    }
+}
+function gBD() {
+    if (navigator.appName == "Opera" || navigator.userAgent.indexOf("Firefox") != -1) {
+        gv.b = 2;
+        gv.v = "ogg";
+        return
+    }
+    if (navigator.appName == "Microsoft Internet Explorer") {
+        gv.b = 1;
+        var a = document.createElement("video");
+        if (a.play) {
+            gv.v = "mp4";
+            return
+        } else {
+            gv.v = 0;
+            return
+        }
+    }
+    if (navigator.vendor.indexOf("Apple") != -1 || navigator.vendor.indexOf("Google") != -1) {
+        gv.b = 0;
+        var b = document.createElement("video");
+        if (b.canPlayType("video/mp4") == "") gv.v = "ogg";
+        else gv.v = "mp4";
+        return
+    }
+    gv.b = 3
+}
+function checkForAudioVideoObject(a, b) {
+    if (typeof a == "undefined" || typeof a.play == "undefined") {
+        return
+    }
+    var c = [a, b];
+    for (var d = 0; d < au.length; d++) {
+        if (au[d].Id == a.Id) {
+            if (au[d][1] < b) {
+                au[d][1] = b
+            }
+            return
+        }
+    }
+    au[au.length] = c
+}
+function gms() {
+    function a(a) {
+        if (gv.v != 0) {
+            var b = au[a][0];
+            try {
+                if (!b.paused) {
+                    b.pause()
+                }
+                if (b.currentTime != 0) {
+                    b.currentTime = 0
+                }
+            } catch (c) { }
+        }
+    }
+    for (j = 0; j < au.length; j++) {
+        if (au[j][1] == 1) {
+            a(j);
+            au.splice(j, 1);
+            j--
+        } else {
+            au[j][1]--
+        }
+    }
+}
+function scormGoTo(a) {
+    if (a != "") {
+        gc = parseInt(a)
+    }
+    if (gv.b != 1) gfl();
+    $(window).resize(resizer);
+    $(window).bind("load", atload);
+    $(document).ready(resizer)
+}
+var gc = 1;
+var gr;
+var gf = 0;
+var gd = 0;
+var gti = 0;
+var gli = 0;
+var gln = 0;
+var gpc = 1;
+var au = new Array;
+var gx = 0;
+var gxf = false;
+var gt = 0;
+var gpp = 1;
+var gp = 0;
+var gStartTime = 0;
+var gtct = 0;
+var gafi = 0;
+var gplength = 0;
+var gslength = new Array;
+var galength = new Array;
+var fcon = 0;
+var aatoid = 0;
+var scormendstatus = false;
+Cbfun = function () {
+    return window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || function (a) {
+        return window.setTimeout(a, 1e3 / 60)
+    }
+}();
+UpdategT = function () {
+    if (gpp == 1) return;
+    gtct = (new Date).getTime();
+    gt = gtct - gStartTime;
+    setProgress();
+    if (gx == 1) {
+        if (gt >= gslength[gc - 1] + animations["s" + gc].t.i) {
+            if (gxf) {
+                gxf = false;
+                tranend(1);
+                return 0
+            } else gxf = true
+        }
+        gafi = Cbfun(UpdategT);
+        return
+    }
+    animations["s" + gc].f = gt;
+    if (gt >= galength[animations["s" + gc].g]) {
+        pause();
+        if (lastAnimationPlaying && typeof (advanceAfterSlide) != "undefined" && typeof (advanceSlideUrl) != "undefined") {
+            window.setTimeout('window.location = advanceSlideUrl;', advanceAfterSlide);
+        }
+        var a = gt - galength[animations["s" + gc].g];
+        gtct = gtct - a;
+        animations["s" + gc].f = gt = galength[animations["s" + gc].g];
+        animations["s" + gc].g++;
+        if (fcon == 1) {
+            if (typeof galength[animations["s" + gc].g] != "undefined") {
+                playCurrentAniamtion();
+                play()
+            }
+            fcon = 0
+        } else if (animations["s" + gc].a == 1) {
+            if (typeof galength[animations["s" + gc].g] != "undefined") {
+                playCurrentAniamtion();
+                play()
+            } else {
+                next()
+            }
+        }
+        return 0
+    }
+    gafi = Cbfun(UpdategT)
+}
+
+tran = function (c) {
+    if (c == 1) {
+        this.a = 1
+    } else {
+        if (typeof window[c.name] != "undefined")
+            this.a = eval("new " + c.name + "(c)");
+        else
+            this.a = new Fade(c)
+    }
+    this.initialize = function (a) {
+        if (this.a != 1)
+            this.a.Initialize(a)
+    };
+    this.play = function () {
+        gx = 1;
+        if (this.a == 1) {
+            gStartTime = gStartTime - animations["s" + gc].t.i;
+            gco("s" + gc + "s0").style.display = "block";
+            if (gc != gpc)
+                gco("s" + gpc + "s0").style.display = "none";
+            if (gpc > gc) {
+                gco("s" + gpc + "s0").style.zIndex = "-1"
+            }
+            return
+        }
+        gco("s" + gc + "s0").style.opacity = 0;
+        gco("s" + gc + "s0").style.display = "block";
+        if (gpc > gc) {
+            gco("s" + gpc + "s0").style.zIndex = "-1"
+        }
+        this.a.play()
+    };
+    this.pause = function () {
+        this.a.pause()
+    };
+    this.stop = function () {
+        this.a.stop()
+    };
+    this.reset = function () {
+        this.a.resert()
+    }
+};
+autoAdvance = function (a) {
+    this.play = function () { };
+    this.pause = function () { };
+    this.reset = function () { };
+    this.stop = function () { }
+
+};
+aVideo = function (a, b) {
+    this.s = b;
+    this.d = a.c1;
+    this.t = a.c2;
+    this.r = a.s0;
+    this.o = document.getElementById(gci(a.objectId, gc)).getElementsByTagName("video")[0];
+    this.a = 0;
+    if (this.d + this.t > 0)
+        this.a = 1
+};
+aVideo.prototype.play = function () {
+    var a = this;
+    checkForAudioVideoObject(a.o, a.r);
+    if (a.a == 0)
+        try {
+            a.o.play()
+        } catch (b) { }
+
+    else {
+        Cbfun(c);
+        function c() {
+            if (gp == 0) {
+                a.pause();
+                return
+            }
+            var b = gt - a.s - a.d;
+            if (b < 0) {
+                if (Math.abs(b) > a.d) {
+                    a.reset()
+                } else {
+                    Cbfun(c)
+                }
+                return
+            }
+            if (b >= a.t) {
+                a.reset();
+                return
+            }
+            try {
+                if (typeof a.o.play != "undefined")
+                    if (a.o.paused)
+                        a.o.play()
+            } catch (d) { }
+
+            Cbfun(c)
+        }
+    }
+};
+aVideo.prototype.pause = function () {
+    var a = this;
+    try {
+        a.o.pause()
+    } catch (b) { }
+
+};
+aVideo.prototype.reset = aVideo.prototype.stop = function () {
+    var a = this;
+    try {
+        if (a.o.currentTime != 0) {
+            a.o.currentTime = 0
+        }
+        a.o.pause()
+    } catch (b) { }
+
+    if (typeof a.o == "undefined" || typeof a.o.play == "undefined") {
+        return
+    }
+    for (var c = 0; c < au.length; c++) {
+        if (au[c].Id == a.o.Id) {
+            au.splice(c, 1);
+            return
+        }
+    }
+};
+aAudio = function (a, b) {
+    this.s = b;
+    this.d = a.c1;
+    this.t = a.c2;
+    this.r = a.s0;
+    this.o = document.getElementById(gci(a.objectId, gc)).getElementsByTagName("audio")[0];
+    this.a = 0;
+    if (this.d + this.t > 0)
+        this.a = 1
+};
+aAudio.prototype.play = function () {
+    var a = this;
+    checkForAudioVideoObject(a.o, a.r);
+    if (a.a == 0)
+        try {
+            a.o.play()
+        } catch (b) { }
+
+    else {
+        Cbfun(c);
+        function c() {
+            if (gp == 0) {
+                a.pause();
+                return
+            }
+            var b = gt - a.s - a.d;
+            if (b < 0) {
+                if (Math.abs(b) > a.d) {
+                    a.reset()
+                } else {
+                    Cbfun(c)
+                }
+                return
+            }
+            if (b >= a.t) {
+                a.reset();
+                return
+            }
+            try {
+                if (typeof a.o.play != "undefined")
+                    if (a.o.paused)
+                        a.o.play()
+            } catch (d) { }
+
+            Cbfun(c)
+        }
+    }
+};
+aAudio.prototype.pause = function () {
+    var a = this;
+    try {
+        a.o.pause()
+    } catch (b) { }
+
+};
+aAudio.prototype.reset = aAudio.prototype.stop = function () {
+    var a = this;
+    try {
+        if (a.o.currentTime != 0) {
+            a.o.currentTime = 0
+        }
+        a.o.pause()
+    } catch (b) { }
+
+    if (typeof a.o == "undefined" || typeof a.o.play == "undefined") {
+        return
+    }
+    for (var c = 0; c < au.length; c++) {
+        if (au[c].Id == a.o.Id) {
+            au.splice(c, 1);
+            return
+        }
+    }
+}

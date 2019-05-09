@@ -1,0 +1,254 @@
+
+#import "FacebookManager.h"
+
+//#import "User.h"
+#import "DataModelManager.h"
+
+#import "Utils.h"
+//#import "UserManager.h"
+
+//#import <Accounts/Accounts.h>
+
+#import <Facebook.h>
+#import <FBError.h>
+
+@implementation FacebookManager {
+    
+}
+
+@synthesize facebook;
+
+#pragma mark Facebook Singleton
+
++ (FacebookManager*) sharedManager {
+    static FacebookManager *sharedFacebookManager = nil;
+    
+    @synchronized(self) {
+        if (sharedFacebookManager == nil) {
+            sharedFacebookManager = [[self alloc] init];
+        }
+    }
+    return sharedFacebookManager;
+}
+
+#pragma mark User Functions
+
+/*
+- (User *) activeUser {
+    __block User *activeUser = nil;
+    
+    //if (FBSession.activeSession.isOpen) {
+        [[[FBRequest alloc] initWithSession:FBSession.activeSession graphPath:@"me?fields=id,name,first_name,last_name,link,username,gender,email,timezone,locale,verified,updated_time,picture"] startWithCompletionHandler: ^(FBRequestConnection *connection, NSDictionary<FBGraphUser> *facebookUser, NSError *error) {
+            if (!error) {
+                User *activeUser = (User *)[NSEntityDescription insertNewObjectForEntityForName:@"User" inManagedObjectContext:[[DataModelManager sharedManager] managedObjectContext]];
+                [activeUser fromFacebookUser:facebookUser isActive:1 cacheImages:TRUE];
+            } else {
+                NSLog(@"Facebook Error: %@",error);
+            }
+        }];
+    //} else {
+    //    // Authenticate first.
+    //    NSLog(@"Authenticate First");
+    //}
+    
+    return activeUser;
+}
+*/
+
+#pragma mark Facebook Session Functions
+
+- (BOOL) isSessionActive {
+    if (FBSession.activeSession.isOpen) {
+        NSLog(@"SESSION OPEN");
+    }
+    BOOL result = FBSession.activeSession.state == FBSessionStateCreatedTokenLoaded;
+    if (result) {
+        NSLog(@"Facebook Session Active. Token: %@", FBSession.activeSession.accessToken);
+    } else {
+        NSLog(@"Facebook Session Inactive.");
+    }
+    return result;
+}
+
+/*
+ * Callback for session changes.
+ */
+- (void) sessionStateChanged:(FBSession *)session state:(FBSessionState) state error:(NSError *)error handler:(SuccessHandler)handler {
+    
+    if (error) {
+        //NSLog(@"Error Code [error code] = %d", [[[error userInfo] objectForKey:@"com.facebook.sdk:ErrorInnerErrorKey"] code]);
+        
+        int innerError = [[[error userInfo] objectForKey:FBErrorInnerErrorKey] code];
+        NSString* loginFailedReason = [[error userInfo] objectForKey:FBErrorLoginFailedReason];
+
+        if (innerError == -1009) {
+            [Utils messageDisplay:@"Birthday Calendar" :@"Apologies. We're having trouble connecting to Facebook. Please check your internet connection and try again." :-1];
+        } else {
+            if (loginFailedReason && loginFailedReason == FBErrorLoginFailedReason) {
+                [Utils messageDisplay:@"Birthday Calendar" :@"Apologies. Login to Facebook failed. Please make sure you've granted access to Birthdays in Settings->Facebook." :-1];
+            } else {
+                [Utils messageDisplay:@"Birthday Calendar" :@"Apologies. We're having trouble connecting to Facebook. Please make sure you've granted Facebook account access to Birthday Calendar." :-1];
+            }
+        }
+        
+        //[[NSNotificationCenter defaultCenter] postNotificationName:FB_LOAD_CANCEL object:nil];
+        
+        /*
+        UIAlertView *alertView = [[UIAlertView alloc]
+                                  initWithTitle:@"Error"
+                                  message:error.localizedDescription
+                                  delegate:nil
+                                  cancelButtonTitle:@"OK"
+                                  otherButtonTitles:nil];
+        [alertView show];
+        */
+    } else {
+    
+        if (FB_ISSESSIONOPENWITHSTATE(state)) {
+            NSLog(@"Facebook Token Created: %@", [session accessToken]);
+
+        
+            // Initiate a Facebook instance
+            if (!self.facebook) {
+                self.facebook = [[[Facebook alloc]
+                             initWithAppId:FBSession.activeSession.appID
+                             andDelegate:nil] autorelease];
+            }
+        
+            // Store the Facebook session information
+            self.facebook.accessToken = FBSession.activeSession.accessToken;
+            self.facebook.expirationDate = FBSession.activeSession.expirationDate;
+
+            handler();
+        } else {
+            switch (state) {
+                case FBSessionStateClosed:
+                case FBSessionStateClosedLoginFailed:
+                    [self closeAndClearTokenInformation];
+                    self.facebook = nil;
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+}
+
+/*
+-(void)fbResync
+{
+    ACAccountStore *accountStore;
+    ACAccountType *accountTypeFB;
+    if ((accountStore = [[ACAccountStore alloc] init]) && (accountTypeFB = [accountStore accountTypeWithAccountTypeIdentifier:ACAccountTypeIdentifierFacebook] ) ){
+        
+        NSArray *fbAccounts = [accountStore accountsWithAccountType:accountTypeFB];
+        id account;
+        if (fbAccounts && [fbAccounts count] > 0 && (account = [fbAccounts objectAtIndex:0])){
+            
+            [accountStore renewCredentialsForAccount:account completion:^(ACAccountCredentialRenewResult renewResult, NSError *error) {
+                //we don't actually need to inspect renewResult or error.
+                if (error){
+                    NSLog(@"Renew Error: %@", [error localizedDescription]);
+                }
+            }];
+        }
+    }
+    
+    [accountStore release];
+}
+*/
+
+- (BOOL) openSessionWithAllowLoginUI:(BOOL)allowLoginUI handler:(SuccessHandler)handler {
+    NSArray *permissions = [[[NSArray alloc] initWithObjects:
+                             @"email",
+                             @"friends_birthday",
+                             nil] autorelease];
+    
+    BOOL result = [FBSession openActiveSessionWithReadPermissions:permissions
+                                                     allowLoginUI:allowLoginUI
+                                                completionHandler:^(FBSession *session,
+                                                                    FBSessionState state,
+                                                                    NSError *error) {
+                                                        [self sessionStateChanged:session
+                                                                            state:state
+                                                                            error:error
+                                                                          handler:handler];
+                                                }];
+    
+    return result;
+}
+
+/*
+- (BOOL) openSessionWithAllowLoginUI:(BOOL)allowLoginUI handler:(SuccessHandler)handler {
+    NSArray *permissions = [[[NSArray alloc] initWithObjects:
+                            @"email",
+                            @"friends_birthday",
+                            nil] autorelease];
+    
+    BOOL result = [FBSession openActiveSessionWithReadPermissions:permissions
+                                                     allowLoginUI:allowLoginUI
+                                                completionHandler:^(FBSession *session,
+                                                                    FBSessionState state,
+                                                                    NSError *error) {
+                                                    if (error) {
+                                                        NSLog(@"Session error");
+                                                        [self fbResync];
+                                                        [NSThread sleepForTimeInterval:0.5];   //half a second
+                                                        [FBSession openActiveSessionWithReadPermissions:permissions
+                                                                                           allowLoginUI:YES
+                                                                                      completionHandler:^(FBSession *session, FBSessionState state, NSError *error) {
+                                                                                          [self sessionStateChanged:session state:state error:error handler:handler];
+                                                                                      }];
+                                                        //[self sessionStateChanged:session
+                                                        //                state:state
+                                                        //                error:error
+                                                        //           handler:handler];
+                                                    } else {
+                                                        [self sessionStateChanged:session
+                                                                            state:state
+                                                                            error:error
+                                                                          handler:handler];
+                                                    }
+                                                }];
+    
+    return result;
+}
+*/
+
+- (void) closeSession {
+    [FBSession.activeSession close];
+    //[self.facebook logout];
+}
+
+- (void) closeAndClearTokenInformation {
+    return [FBSession.activeSession closeAndClearTokenInformation];
+}
+
+#pragma mark Application Flow
+
+- (void) handleDidBecomeActive {
+    [FBSession.activeSession handleDidBecomeActive];
+    if (!self.facebook) {
+        self.facebook = [[[Facebook alloc]
+                         initWithAppId:FBSession.activeSession.appID
+                         andDelegate:nil] autorelease];
+    }
+    if (FBSession.activeSession) {
+        if (FBSession.activeSession.accessToken) {
+            self.facebook.accessToken = FBSession.activeSession.accessToken;
+        }
+        if (FBSession.activeSession.expirationDate) {
+            self.facebook.expirationDate = FBSession.activeSession.expirationDate;
+        }
+    }
+}
+
+- (BOOL) handleOpenURL:(NSURL*) url {
+    return [FBSession.activeSession handleOpenURL:url];
+}
+
+- (void)dealloc {
+    [super dealloc];
+}
+
+@end

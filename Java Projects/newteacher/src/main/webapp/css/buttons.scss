@@ -1,0 +1,127 @@
+/* main button styles */
+
+.button {
+  position: relative;
+  display: inline-block;
+  font-weight: bold;
+  font-family: inherit;
+  color: #fdfac2;
+  cursor: pointer;
+  white-space: nowrap;
+  vertical-align: middle;
+  border: 1px solid;
+  border-radius: 2px;
+  text-decoration: none !important;
+  
+  &:hover {
+    text-decoration: none !important;
+  }
+  
+  &:visited {
+    color: #fff;
+  }
+  
+  &.small {
+    padding: 0 10px;
+    height: 25px;
+    line-height: 24px;
+    font-size: 12px;
+    
+    .ie8 & {line-height: 23px;}
+    .ie9 & {line-height: 25px;}
+    
+    &.notext {padding: 0 0 0 5px}
+  }
+  
+  & {
+    padding: 0 15px;
+    height: 30px;
+    line-height: 28px;
+    font-size: 14px;
+    
+    &.notext {padding: 0 8px}
+  }
+  
+  & {
+    border: 1px solid #585858;
+	  color: #fff;
+	  background: #222222;
+	  background-image: -webkit-linear-gradient(top, #444444, #222222); /* Chrome 10+, Saf5.1+, iOS 5+ */
+	  background-image:    -moz-linear-gradient(top, #444444, #222222); /* FF3.6 */
+	  background-image:      -o-linear-gradient(top, #444444, #222222); /* Opera 11.10+ */
+	  background-image:         linear-gradient(to bottom, #444444, #222222);
+  
+    &:hover {
+      color: #fff;
+      background: #333;
+		  background-image: -webkit-linear-gradient(top, #222222, #444444); /* Chrome 10+, Saf5.1+, iOS 5+ */
+		  background-image:    -moz-linear-gradient(top, #222222, #444444); /* FF3.6 */
+		  background-image:      -o-linear-gradient(top, #222222, #444444); /* Opera 11.10+ */
+		  background-image:         linear-gradient(to bottom, #222222, #444444);
+    }
+    
+    &:active {
+      background: #64676c;
+    }
+  }
+  
+  &.blue {
+    border-color: #008edf #087fc3 #02669f;
+  
+    color: #fff;
+    background: #32b3fc;
+    background-image: -webkit-linear-gradient(top, #45bcff, #019cf6); /* Chrome 10+, Saf5.1+, iOS 5+ */
+    background-image:    -moz-linear-gradient(top, #45bcff, #019cf6); /* FF3.6 */
+    background-image:      -o-linear-gradient(top, #45bcff, #019cf6); /* Opera 11.10+ */
+    background-image:         linear-gradient(to bottom, #45bcff, #019cf6);
+    
+    &:hover {
+      background: #10a4f8;
+      background-image: -webkit-linear-gradient(top, #019cf6, #45bcff); /* Chrome 10+, Saf5.1+, iOS 5+ */
+      background-image:    -moz-linear-gradient(top, #019cf6, #45bcff); /* FF3.6 */
+      background-image:      -o-linear-gradient(top, #019cf6, #45bcff); /* Opera 11.10+ */
+      background-image:         linear-gradient(to bottom, #019cf6, #45bcff);
+    }
+    
+    &:active {
+      background: #019cf6;
+      background-image: -webkit-linear-gradient(top, #0da2f8, #019cf6); /* Chrome 10+, Saf5.1+, iOS 5+ */
+      background-image:    -moz-linear-gradient(top, #0da2f8, #019cf6); /* FF3.6 */
+      background-image:      -o-linear-gradient(top, #0da2f8, #019cf6); /* Opera 11.10+ */
+      background-image:         linear-gradient(to bottom, #0da2f8, #019cf6);
+    }
+  }
+  
+  &.grey {
+    border-color: #dddddd #dbdbdb #b8b8b8;
+/*     text-shadow: none; */
+  
+    color: #555;
+    background: #f2f2f2;
+    background-image: -webkit-linear-gradient(top, #fefefe, #e6e6e6); /* Chrome 10+, Saf5.1+, iOS 5+ */
+    background-image:    -moz-linear-gradient(top, #fefefe, #e6e6e6); /* FF3.6 */
+    background-image:      -o-linear-gradient(top, #fefefe, #e6e6e6); /* Opera 11.10+ */
+    background-image:         linear-gradient(to bottom, #fefefe, #e6e6e6);
+    
+    &:hover {
+      border-top-color: #ccc;
+      background: #ececec;
+      background-image: -webkit-linear-gradient(top, #e6e6e6, #fefefe); /* Chrome 10+, Saf5.1+, iOS 5+ */
+      background-image:    -moz-linear-gradient(top, #e6e6e6, #fefefe); /* FF3.6 */
+      background-image:      -o-linear-gradient(top, #e6e6e6, #fefefe); /* Opera 11.10+ */
+      background-image:         linear-gradient(to bottom, #e6e6e6, #fefefe);
+    }
+    
+    &:active {
+      background: #e6e6e6;
+      background-image: none;
+    }
+  }
+  
+  & + .button {margin-left: 15px;}
+  &.right + .button.right {margin-left: 0; margin-right: 15px}
+}
+
+input.button {
+  padding-bottom: 2px;
+}

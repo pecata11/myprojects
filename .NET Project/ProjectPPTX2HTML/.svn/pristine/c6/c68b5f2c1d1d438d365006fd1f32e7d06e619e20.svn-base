@@ -1,0 +1,27 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace ClearSlideLibrary.Dom.PPTTexts
+{
+    public class PPTParagraph
+    {
+        public List<PPTRunProperties> RunPropList { get; set; }
+        public string Align { get; set; }//ctr, l, r, just, dist, thai, justLow
+        public string FontAlign { get; set; }//auto, b, base, ctr, t
+        public Int32 Indent { get; set; }
+        public Int32 Level { get; set; }
+        public Int32 marginLeft { get; set; }
+        public Int32 marginRight { get; set; }
+        public Int32 defTabSize { get; set; }
+        public bool Invisible { get; set; }
+        public bool Animatable { get; set; }
+        public int Paragraph { get; set; }
+        public bool hasBullet { get; set; }
+        public PPTRunProperties defaultRunProperties { get; set; }
+        
+
+    }
+}

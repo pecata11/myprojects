@@ -1,0 +1,74 @@
+﻿using System;
+using System.Text;
+
+namespace ClearSlideLibrary.HtmlController
+{
+    internal class HtmlText : HtmlPresentationElement
+    {
+        private string _text;
+        private bool bold;
+        private bool italic;
+        private string underline;
+        public int width { get; set; }
+        public double Rotate { get; set; }
+        public void setLeft(int newLeft)
+        {
+            left = newLeft;
+        }
+
+        public string Text
+        {
+            set { this._text = value; }
+        }
+
+        public HtmlText(int left, int top, string fontFamily, string fontColor, double fontSize,
+                         bool bold, bool italic, string underline)
+        {
+            base.fontSize = fontSize;
+            base.left = left;
+            base.top = top;
+            base.fontFamily = fontFamily;
+            base.fontColor = fontColor;
+            this.bold = bold;
+            this.italic = italic;
+
+            if (underline != null)
+            {
+                if (underline.Equals("Single"))
+                {
+                    this.underline = "underline";
+                }
+            }
+
+        }
+
+        public override string DrawElement()
+        {
+            string rot = "";
+            if (Rotate != 0.0)
+            {
+                rot = "-o-transform:rotate(" + Rotate + "deg);-ms-transform:rotate(" + Rotate + "deg);-moz-transform:rotate(" + Rotate + "deg);-webkit-transform:rotate(" + Rotate + "deg);";
+
+            }
+            StringBuilder textBuilder = new StringBuilder();
+            textBuilder.Append("<pre style=\"top:" + top.ToString() + "px;left:" + left.ToString() + "px; font-size:" + fontSize.ToString() + "px; color:" + fontColor + (italic ? ";font-style:italic" : "") + (bold ? ";font-weight:bold" : "") + ";text-decoration:" + underline + ";font-family:" + fontFamily + ";" + rot + "\">");
+            textBuilder.Append(_text);
+            textBuilder.Append("</pre>");
+
+            return textBuilder.ToString();
+        }
+
+        public override string ToString()
+        {
+            Console.WriteLine("The top is:" + top);
+            Console.WriteLine("The left is:" + left);
+            Console.WriteLine("The text is:" + _text);
+            Console.WriteLine("The text color is:" + fontColor);
+            Console.WriteLine("The text size is:" + fontSize);
+            Console.WriteLine("The text family is:" + fontFamily);
+            Console.WriteLine("The height is:" + height);
+            return string.Format("[{0}, {1}, {2}, {3}, {4}, {5}]",
+                          top, left, _text, fontColor, fontSize, fontFamily);
+        }
+    }
+}
